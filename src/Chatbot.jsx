@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { filterServices, CATEGORY_COLORS, CATEGORIES, ACCESS_LABELS } from './utils';
-
-const STEPS = 6;
+import { filterServices, CATEGORY_COLORS, CATEGORIES } from './utils';
 
 const HOUSEHOLD_OPTIONS = [
   'Ik ben student',
@@ -32,7 +30,7 @@ export default function Chatbot({ services, onClose, onHighlight }) {
     if (bodyRef.current) {
       bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
     }
-  }, [step, loading]);
+  }, [step, loading, rayIntro]);
 
   // Auto-advance from step 0
   useEffect(() => {
@@ -48,8 +46,8 @@ export default function Chatbot({ services, onClose, onHighlight }) {
       return {
         ...prev,
         selected_categories: has
-          ? prev.selected_categories.filter((c) => c !== cat)
-          : [...prev.selected_categories, cat],
+            ? prev.selected_categories.filter((c) => c !== cat)
+            : [...prev.selected_categories, cat],
       };
     });
   };
@@ -59,18 +57,34 @@ export default function Chatbot({ services, onClose, onHighlight }) {
       if (opt === 'Wil ik niet zeggen') {
         return { ...prev, household_type: ['Wil ik niet zeggen'] };
       }
-      const filtered = prev.household_type.filter((h) => h !== 'Wil ik niet zeggen');
+      const filtered = prev.household_type.filter(
+          (h) => h !== 'Wil ik niet zeggen'
+      );
       const has = filtered.includes(opt);
       return {
         ...prev,
-        household_type: has ? filtered.filter((h) => h !== opt) : [...filtered, opt],
+        household_type: has
+            ? filtered.filter((h) => h !== opt)
+            : [...filtered, opt],
       };
     });
   };
 
   const runChat = async () => {
     setLoading(true);
-    const results = filterServices(services, session);
+
+    // Extract keywords from problem description
+    const descWords = session.problem_description
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length > 3);
+
+    const sessionWithKw = {
+      ...session,
+      selected_keywords: descWords,
+    };
+
+    const results = filterServices(services, sessionWithKw);
     setFilteredServices(results);
 
     const userMsg = `De gebruiker heeft de volgende informatie gedeeld:
@@ -78,7 +92,6 @@ export default function Chatbot({ services, onClose, onHighlight }) {
 - Leeftijd: ${session.age || 'Niet ingevuld'}
 - Situatie: ${session.household_type.join(', ') || 'Niet ingevuld'}
 - Omschrijving: ${session.problem_description || 'Niet ingevuld'}
-- Trefwoorden: ${session.selected_keywords.join(', ') || 'Geen'}
 
 De volgende diensten zijn gevonden die passen:
 ${results.map((s) => `- ${s.name}: ${s.description}`).join('\n')}
@@ -114,7 +127,6 @@ Gebruik altijd "je" en "jou", nooit "u".`,
       setRayIntro(text);
     } catch (e) {
       setApiError(true);
-      setRayIntro('');
     }
 
     setLoading(false);
@@ -123,12 +135,27 @@ Gebruik altijd "je" en "jou", nooit "u".`,
   };
 
   const parseIntroAndCards = () => {
-    if (!rayIntro) return { intro: '', cards: filteredServices.map((s) => ({ service: s, why: '' })) };
+    if (!rayIntro)
+      return {
+        intro: '',
+        cards: filteredServices.map((s) => ({ service: s, why: '' })),
+      };
 
     const lines = rayIntro.split('\n').filter(Boolean);
-    const intro = lines[0] || '';
+    // First line(s) without a label are the intro
+    const introLines = [];
+    const labeledLines = [];
+    for (const line of lines) {
+      if (/^\(.*?\)/.test(line.trim())) {
+        labeledLines.push(line);
+      } else if (labeledLines.length === 0) {
+        introLines.push(line);
+      }
+    }
+    const intro = introLines.join(' ');
+
     const cards = filteredServices.map((s) => {
-      const line = lines.find((l) => l.includes(`(${s.name})`));
+      const line = labeledLines.find((l) => l.includes(`(${s.name})`));
       const why = line ? line.replace(`(${s.name})`, '').trim() : '';
       return { service: s, why };
     });
@@ -153,232 +180,277 @@ Gebruik altijd "je" en "jou", nooit "u".`,
   const { intro, cards } = parseIntroAndCards();
 
   return (
-    <div className="chat-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="chat-modal">
-        {/* Header */}
-        <div className="chat-header">
-          <div className="ray-avatar">🧭</div>
-          <div className="chat-header-info">
-            <h3>Ray</h3>
-            <p>Hulpwijzer Sociale Kaart</p>
-          </div>
-          <button className="chat-close" onClick={onClose} aria-label="Sluiten">✕</button>
-        </div>
-
-        {/* Progress */}
-        <div className="chat-progress">
-          {[1,2,3,4,5].map((i) => (
-            <div
-              key={i}
-              className={`progress-dot ${step > i ? 'done' : step === i ? 'current' : ''}`}
-            />
-          ))}
-        </div>
-
-        {/* Body */}
-        <div className="chat-body" ref={bodyRef}>
-
-          {/* STEP 0 */}
-          {step >= 0 && (
-            <div className="chat-bubble">
-              <div className="bubble-avatar">🧭</div>
-              <div className="bubble-text">
-                Hallo! Mijn naam is Ray. Ik help je zoeken naar hulp en ondersteuning in Leiden. Ik stel je een paar korte vragen om de beste diensten voor jou te vinden.
-              </div>
+      <div
+          className="chat-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) onClose();
+          }}
+      >
+        <div className="chat-modal">
+          {/* Header */}
+          <div className="chat-header">
+            <div className="ray-avatar">🧭</div>
+            <div className="chat-header-info">
+              <h3>Ray</h3>
+              <p>Hulpwijzer Sociale Kaart</p>
             </div>
-          )}
+            <button className="chat-close" onClick={onClose} aria-label="Sluiten">
+              ✕
+            </button>
+          </div>
 
-          {/* STEP 1 — categories */}
-          {step >= 1 && (
-            <>
-              <div className="chat-bubble">
-                <div className="bubble-avatar">🧭</div>
-                <div className="bubble-text">
-                  Waar heb je hulp bij nodig? Je kunt meerdere onderwerpen kiezen.
-                </div>
-              </div>
-              <div className="chat-option-grid">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    className={`chat-option-btn ${session.selected_categories.includes(cat) ? 'selected' : ''}`}
-                    onClick={() => handleCategoryToggle(cat)}
-                    disabled={step > 1}
-                  >
-                    <span className="opt-color" style={{ background: CATEGORY_COLORS[cat] }} />
-                    {cat}
-                  </button>
-                ))}
-              </div>
-              {step === 1 && (
-                <button
-                  className="chat-next-btn"
-                  onClick={() => setStep(2)}
-                  disabled={session.selected_categories.length === 0}
-                >
-                  Verder →
-                </button>
-              )}
-            </>
-          )}
+          {/* Progress */}
+          <div className="chat-progress">
+            {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                    key={i}
+                    className={`progress-dot ${
+                        step > i ? 'done' : step === i ? 'current' : ''
+                    }`}
+                />
+            ))}
+          </div>
 
-          {/* STEP 2 — age */}
-          {step >= 2 && (
-            <>
-              <div className="chat-bubble" style={{ marginTop: 14 }}>
-                <div className="bubble-avatar">🧭</div>
-                <div className="bubble-text">
-                  Wat is je leeftijd? Dit helpt me om passende diensten te zoeken.
+          {/* Body */}
+          <div className="chat-body" ref={bodyRef}>
+            {/* STEP 0 — greeting */}
+            {step >= 0 && (
+                <div className="chat-bubble">
+                  <div className="bubble-avatar">🧭</div>
+                  <div className="bubble-text">
+                    Hallo! Mijn naam is Ray. Ik help je zoeken naar hulp en
+                    ondersteuning in Leiden. Ik stel je een paar korte vragen om
+                    de beste diensten voor jou te vinden.
+                  </div>
                 </div>
-              </div>
-              <div className="chat-options">
-                {[...AGE_OPTIONS, 'Wil ik niet zeggen'].map((opt) => (
-                  <button
-                    key={opt}
-                    className={`chat-option-btn ${session.age === opt ? 'selected' : ''}`}
-                    onClick={() => setSession((p) => ({ ...p, age: opt }))}
-                    disabled={step > 2}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-              {step === 2 && (
-                <button
-                  className="chat-next-btn"
-                  onClick={() => setStep(3)}
-                  disabled={!session.age}
-                >
-                  Verder →
-                </button>
-              )}
-            </>
-          )}
+            )}
 
-          {/* STEP 3 — household */}
-          {step >= 3 && (
-            <>
-              <div className="chat-bubble" style={{ marginTop: 14 }}>
-                <div className="bubble-avatar">🧭</div>
-                <div className="bubble-text">
-                  Bedankt, dat helpt me om beter te zoeken. Kun je iets vertellen over je situatie? (meerdere antwoorden mogelijk)
-                </div>
-              </div>
-              <div className="chat-options">
-                {HOUSEHOLD_OPTIONS.map((opt) => (
-                  <button
-                    key={opt}
-                    className={`chat-option-btn ${session.household_type.includes(opt) ? 'selected' : ''}`}
-                    onClick={() => handleHouseholdToggle(opt)}
-                    disabled={step > 3}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-              {step === 3 && (
-                <button
-                  className="chat-next-btn"
-                  onClick={() => setStep(4)}
-                  disabled={session.household_type.length === 0}
-                >
-                  Verder →
-                </button>
-              )}
-            </>
-          )}
-
-          {/* STEP 4 — description */}
-          {step >= 4 && (
-            <>
-              <div className="chat-bubble" style={{ marginTop: 14 }}>
-                <div className="bubble-avatar">🧭</div>
-                <div className="bubble-text">
-                  Kun je in een paar woorden beschrijven waar je hulp bij nodig hebt?
-                </div>
-              </div>
-              {step === 4 && (
+            {/* STEP 1 — categories */}
+            {step >= 1 && (
                 <>
+                  <div className="chat-bubble">
+                    <div className="bubble-avatar">🧭</div>
+                    <div className="bubble-text">
+                      Waar heb je hulp bij nodig? Je kunt meerdere onderwerpen kiezen.
+                    </div>
+                  </div>
+                  <div className="chat-option-grid">
+                    {CATEGORIES.map((cat) => (
+                        <button
+                            key={cat}
+                            className={`chat-option-btn ${
+                                session.selected_categories.includes(cat) ? 'selected' : ''
+                            }`}
+                            onClick={() => step === 1 && handleCategoryToggle(cat)}
+                            disabled={step > 1}
+                        >
+                    <span
+                        className="opt-color"
+                        style={{ background: CATEGORY_COLORS[cat] }}
+                    />
+                          {cat}
+                        </button>
+                    ))}
+                  </div>
+                  {step === 1 && (
+                      <button
+                          className="chat-next-btn"
+                          onClick={() => setStep(2)}
+                          disabled={session.selected_categories.length === 0}
+                      >
+                        Verder →
+                      </button>
+                  )}
+                </>
+            )}
+
+            {/* STEP 2 — age */}
+            {step >= 2 && (
+                <>
+                  <div className="chat-bubble" style={{ marginTop: 14 }}>
+                    <div className="bubble-avatar">🧭</div>
+                    <div className="bubble-text">
+                      Wat is je leeftijd? Dit helpt me om passende diensten te vinden.
+                    </div>
+                  </div>
+                  <div className="chat-options">
+                    {[...AGE_OPTIONS, 'Wil ik niet zeggen'].map((opt) => (
+                        <button
+                            key={opt}
+                            className={`chat-option-btn ${
+                                session.age === opt ? 'selected' : ''
+                            }`}
+                            onClick={() =>
+                                step === 2 && setSession((p) => ({ ...p, age: opt }))
+                            }
+                            disabled={step > 2}
+                        >
+                          {opt}
+                        </button>
+                    ))}
+                  </div>
+                  {step === 2 && (
+                      <button
+                          className="chat-next-btn"
+                          onClick={() => setStep(3)}
+                          disabled={!session.age}
+                      >
+                        Verder →
+                      </button>
+                  )}
+                </>
+            )}
+
+            {/* STEP 3 — household */}
+            {step >= 3 && (
+                <>
+                  <div className="chat-bubble" style={{ marginTop: 14 }}>
+                    <div className="bubble-avatar">🧭</div>
+                    <div className="bubble-text">
+                      Bedankt, dat helpt me om beter te zoeken. Kun je iets
+                      vertellen over je situatie?
+                    </div>
+                  </div>
+                  <div className="chat-options">
+                    {HOUSEHOLD_OPTIONS.map((opt) => (
+                        <button
+                            key={opt}
+                            className={`chat-option-btn ${
+                                session.household_type.includes(opt) ? 'selected' : ''
+                            }`}
+                            onClick={() => step === 3 && handleHouseholdToggle(opt)}
+                            disabled={step > 3}
+                        >
+                          {opt}
+                        </button>
+                    ))}
+                  </div>
+                  {step === 3 && (
+                      <button
+                          className="chat-next-btn"
+                          onClick={() => setStep(4)}
+                          disabled={session.household_type.length === 0}
+                      >
+                        Verder →
+                      </button>
+                  )}
+                </>
+            )}
+
+            {/* STEP 4 — description */}
+            {step >= 4 && (
+                <>
+                  <div className="chat-bubble" style={{ marginTop: 14 }}>
+                    <div className="bubble-avatar">🧭</div>
+                    <div className="bubble-text">
+                      Kun je in een paar woorden beschrijven waar je hulp bij nodig
+                      hebt?
+                    </div>
+                  </div>
+                  {step === 4 && (
+                      <>
                   <textarea
-                    className="chat-textarea"
-                    placeholder="Bijv: Ik heb moeite met het betalen van mijn rekeningen..."
-                    maxLength={300}
-                    value={session.problem_description}
-                    onChange={(e) => setSession((p) => ({ ...p, problem_description: e.target.value }))}
+                      className="chat-textarea"
+                      placeholder="Bijv: Ik heb moeite met het betalen van mijn rekeningen..."
+                      maxLength={300}
+                      value={session.problem_description}
+                      onChange={(e) =>
+                          setSession((p) => ({
+                            ...p,
+                            problem_description: e.target.value,
+                          }))
+                      }
                   />
-                  <div className="char-counter">{session.problem_description.length}/300</div>
-                  <button
-                    className="chat-next-btn"
-                    onClick={runChat}
-                    disabled={loading}
-                  >
-                    {loading ? 'Zoeken...' : 'Zoek hulp voor mij →'}
+                        <div className="char-counter">
+                          {session.problem_description.length}/300
+                        </div>
+                        <button
+                            className="chat-next-btn"
+                            onClick={runChat}
+                            disabled={loading}
+                        >
+                          {loading ? 'Zoeken...' : 'Zoek hulp voor mij →'}
+                        </button>
+                      </>
+                  )}
+                </>
+            )}
+
+            {/* Loading */}
+            {loading && (
+                <div className="chat-bubble">
+                  <div className="bubble-avatar">🧭</div>
+                  <div className="bubble-text">
+                    <div className="loading-dots">
+                      <span />
+                      <span />
+                      <span />
+                    </div>
+                  </div>
+                </div>
+            )}
+
+            {/* STEP 5 — results */}
+            {step === 5 && !loading && (
+                <>
+                  {intro ? (
+                      <div className="chat-bubble">
+                        <div className="bubble-avatar">🧭</div>
+                        <div className="bubble-text">{intro}</div>
+                      </div>
+                  ) : (
+                      <div className="chat-bubble">
+                        <div className="bubble-avatar">🧭</div>
+                        <div className="bubble-text">
+                          {filteredServices.length > 0
+                              ? 'Ik heb deze diensten gevonden die bij jou passen:'
+                              : 'Ik kon helaas geen diensten vinden die precies passen. Neem contact op met het Sociaal Wijkteam — zij kunnen je altijd verder helpen.'}
+                        </div>
+                      </div>
+                  )}
+
+                  {filteredServices.length > 0 && (
+                      <div className="chat-results">
+                        {cards.map(({ service: s, why }) => (
+                            <div
+                                key={s.service_id || s.name}
+                                className="chat-result-card"
+                            >
+                              <div className="chat-result-name">{s.name}</div>
+                              <div className="chat-result-why">
+                                {why || s.description}
+                              </div>
+                              <div className="chat-result-meta">
+                                {s.phone && (
+                                    <a href={`tel:${s.phone}`}>📞 {s.phone}</a>
+                                )}
+                                {s.website && s.website.startsWith('http') && (
+                                    <a
+                                        href={s.website}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                      🔗 Website
+                                    </a>
+                                )}
+                                {s._primary_loc?.address && (
+                                    <span style={{ fontSize: 12, color: '#9e9890' }}>
+                            📍 {s._primary_loc.address}
+                          </span>
+                                )}
+                              </div>
+                            </div>
+                        ))}
+                      </div>
+                  )}
+
+                  <button className="restart-btn" onClick={reset}>
+                    ↩ Opnieuw zoeken
                   </button>
                 </>
-              )}
-            </>
-          )}
-
-          {/* Loading */}
-          {loading && (
-            <div className="chat-bubble">
-              <div className="bubble-avatar">🧭</div>
-              <div className="bubble-text">
-                <div className="loading-dots">
-                  <span /><span /><span />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 5 — results */}
-          {step === 5 && !loading && (
-            <>
-              {intro ? (
-                <div className="chat-bubble">
-                  <div className="bubble-avatar">🧭</div>
-                  <div className="bubble-text">{intro}</div>
-                </div>
-              ) : apiError ? (
-                <div className="chat-bubble">
-                  <div className="bubble-avatar">🧭</div>
-                  <div className="bubble-text">
-                    Ik heb de volgende diensten gevonden die bij jou passen. Klik op een dienst voor meer informatie.
-                  </div>
-                </div>
-              ) : null}
-
-              {filteredServices.length === 0 ? (
-                <div className="chat-bubble">
-                  <div className="bubble-avatar">🧭</div>
-                  <div className="bubble-text">
-                    Ik kon helaas geen diensten vinden die precies passen. Probeer het Sociale Wijkteam — zij kunnen je altijd verder helpen.
-                  </div>
-                </div>
-              ) : (
-                <div className="chat-results">
-                  {cards.map(({ service: s, why }) => (
-                    <div key={s.service_id || s.name} className="chat-result-card">
-                      <div className="chat-result-name">{s.name}</div>
-                      {why && <div className="chat-result-why">{why}</div>}
-                      {!why && <div className="chat-result-why">{s.description}</div>}
-                      <div className="chat-result-meta">
-                        {s.phone && <a href={`tel:${s.phone}`}>📞 {s.phone}</a>}
-                        {s.website && <a href={s.website} target="_blank" rel="noreferrer">🔗 Website</a>}
-                        {s.address && <span style={{ fontSize: 12, color: '#9e9890' }}>📍 {s.address}</span>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <button className="restart-btn" onClick={reset}>
-                ↩ Opnieuw zoeken
-              </button>
-            </>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
   );
 }

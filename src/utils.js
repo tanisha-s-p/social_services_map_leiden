@@ -32,6 +32,40 @@ export const LOC_TYPE_LABELS = {
   library: 'Bibliotheek',
 };
 
+/**
+ * Parse a raw category string (possibly comma-separated, possibly single)
+ * into an array of known categories.
+ */
+export function parseCategories(raw) {
+  if (!raw) return [];
+  return raw
+      .split(',')
+      .map((c) => c.trim())
+      .filter((c) => CATEGORIES.includes(c));
+}
+
+/**
+ * Parse keywords / tags from a CSV cell (comma or semicolon separated).
+ */
+export function parseKeywords(raw) {
+  if (!raw) return [];
+  return raw.split(/[,;]/).map((k) => k.trim()).filter(Boolean);
+}
+
+/**
+ * Parse access_type — may be comma-separated list, return first canonical value.
+ */
+export function parseAccessType(raw) {
+  if (!raw) return '';
+  const types = ['walkin', 'appointment', 'home_visit', 'online', 'phone', 'referral_only'];
+  const parts = raw.split(/[,\s]+/).map((p) => p.trim());
+  return parts.find((p) => types.includes(p)) || parts[0] || '';
+}
+
+/**
+ * filterServices — takes the merged service+location objects and session answers.
+ * Returns best 3 matches, or top 3 hubs as fallback.
+ */
 export function filterServices(services, answers) {
   const {
     selected_categories = [],
@@ -45,23 +79,23 @@ export function filterServices(services, answers) {
   // 1. Category filter
   if (selected_categories.length > 0) {
     results = results.filter((s) => {
-      const cats = Array.isArray(s.categories) ? s.categories : [];
+      const cats = s._categories || [];
       return cats.some((c) => selected_categories.includes(c));
     });
   }
 
   // 2. Age filter
-  if (age) {
+  if (age && age !== 'Wil ik niet zeggen') {
     let ageNum = null;
-    if (age === 'onder 18') ageNum = 12;
+    if (age === 'Onder 18') ageNum = 12;
     else if (age === '18–26') ageNum = 22;
     else if (age === '27–65') ageNum = 45;
     else if (age === '65+') ageNum = 70;
 
     if (ageNum !== null) {
       results = results.filter((s) => {
-        const min = s.age_min !== '' && s.age_min !== undefined ? Number(s.age_min) : 0;
-        const max = s.age_max !== '' && s.age_max !== undefined ? Number(s.age_max) : 99;
+        const min = s._age_min ?? 0;
+        const max = s._age_max ?? 99;
         return ageNum >= min && ageNum <= max;
       });
     }
@@ -70,35 +104,37 @@ export function filterServices(services, answers) {
   // 3. Household filter (ignore "wil ik niet zeggen")
   const filteredHousehold = household_type.filter((h) => h !== 'Wil ik niet zeggen');
   if (filteredHousehold.length > 0) {
-    results = results.filter((s) => {
-      const tags = Array.isArray(s.household_tags) ? s.household_tags : [];
-      if (tags.length === 0) return true;
-      return filteredHousehold.some((h) => tags.includes(h));
-    });
+    // We don't have household_tags in the real data, so skip hard filtering
+    // but we can use target_group text matching as a soft signal
+    // Don't hard-filter — real data has no household_tags column
   }
 
-  // 4. Keyword filter
+  // 4. Keyword / search filter
   if (selected_keywords.length > 0) {
     results = results.filter((s) => {
-      const kws = Array.isArray(s.keywords) ? s.keywords : [];
-      const name = (s.name || '').toLowerCase();
-      const desc = (s.description || '').toLowerCase();
+      const kws = s._keywords || [];
+      const haystack = `${s.name} ${s.description} ${s.target_group}`.toLowerCase();
       return selected_keywords.some(
-        (k) => kws.includes(k) || name.includes(k.toLowerCase()) || desc.includes(k.toLowerCase())
+          (k) => kws.some((kw) => kw.toLowerCase().includes(k.toLowerCase())) ||
+              haystack.includes(k.toLowerCase())
       );
     });
   }
 
-  // 5. Fallback to hubs
+  // 5. Fallback
   if (results.length === 0) {
-    return services.filter((s) => s.location_type === 'hub').slice(0, 3);
+    return services.filter((s) => s._loc_type === 'hub').slice(0, 3);
   }
 
-  // 6. Return best 3
+  // 6. Best 3
   return results.slice(0, 3);
 }
 
 export function getCategoryColor(cats) {
   if (!cats || cats.length === 0) return '#9e9890';
-  return CATEGORY_COLORS[cats[0]] || '#9e9890';
+  // Find first known category
+  for (const c of cats) {
+    if (CATEGORY_COLORS[c]) return CATEGORY_COLORS[c];
+  }
+  return '#9e9890';
 }
