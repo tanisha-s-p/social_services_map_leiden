@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Papa from 'papaparse';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
 import Chatbot from './Chatbot';
+import ServiceDetail from './ServiceDetail';
 import { createLeafletIcon } from './MapPin';
 import {
   CATEGORY_COLORS,
@@ -40,22 +41,21 @@ function parseCsv(text) {
   });
 }
 
-function MapController({ center }) {
+// Flies to a position and opens the marker popup at that location_id
+function MapController({ flyTo, openPopupId }) {
   const map = useMap();
+
   useEffect(() => {
-    if (center) map.setView(center, 16, { animate: true });
-  }, [center, map]);
+    if (flyTo) {
+      map.flyTo(flyTo, 17, { animate: true, duration: 0.8 });
+    }
+  }, [flyTo, map]);
+
+  // openPopupId handled via marker refs in parent
   return null;
 }
 
-/**
- * Merge services + locations.
- * A service may have multiple location_ids (comma-separated).
- * Returns enriched service objects with _categories, _keywords, _loc_* etc.
- * Also returns a locations array (unique, with services list attached).
- */
 function buildData(rawServices, rawLocations) {
-  // Build location lookup
   const locMap = {};
   rawLocations.forEach((loc) => {
     locMap[loc.location_id?.trim()] = {
@@ -66,20 +66,17 @@ function buildData(rawServices, rawLocations) {
     };
   });
 
-  // Enrich services
   const enriched = rawServices.map((s) => {
     const cats = parseCategories(s.category);
     const kws = parseKeywords(s.keywords);
     const accessType = parseAccessType(s.access_type);
 
-    // Primary location (first location_id)
     const locIds = (s.location_id || '')
         .split(',')
         .map((id) => id.trim())
         .filter(Boolean);
     const primaryLoc = locIds.length > 0 ? locMap[locIds[0]] : null;
 
-    // Parse age from target_group heuristically (fallback)
     let age_min = 0, age_max = 99;
     const tg = (s.target_group || '').toLowerCase();
     if (tg.includes('18 jaar')) age_min = 18;
@@ -103,7 +100,6 @@ function buildData(rawServices, rawLocations) {
     };
   });
 
-  // Build locations with attached services
   const locWithServices = {};
   rawLocations.forEach((loc) => {
     const id = loc.location_id?.trim();
@@ -136,7 +132,7 @@ export default function App() {
   const [services, setServices] = useState([]);
   const [locations, setLocations] = useState([]);
   const [csvError, setCsvError] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState('locaties');
   const [searchQuery, setSearchQuery] = useState('');
@@ -145,7 +141,15 @@ export default function App() {
   const [activeTypes, setActiveTypes] = useState([]);
   const [showChat, setShowChat] = useState(false);
   const [highlightedIds, setHighlightedIds] = useState([]);
-  const [mapCenter, setMapCenter] = useState(null);
+
+  // Detail panel state
+  const [selectedService, setSelectedService] = useState(null);
+
+  // Map control state
+  const [flyTo, setFlyTo] = useState(null);
+
+  // Marker refs: location_id -> leaflet marker instance
+  const markerRefs = useRef({});
 
   useEffect(() => {
     Promise.all([
@@ -157,20 +161,40 @@ export default function App() {
           const { services: s, locations: l } = buildData(rawServices, rawLocations);
           setServices(s);
           setLocations(l);
-          setLoading(false);
+          setDataLoading(false);
         })
         .catch(() => {
           setCsvError(true);
-          setLoading(false);
+          setDataLoading(false);
         });
   }, []);
 
+  // When user clicks a location card: fly to it and open its popup
+  const handleLocationCardClick = useCallback((loc) => {
+    setFlyTo([loc.latitude, loc.longitude]);
+    // Open popup after fly animation (~900ms)
+    setTimeout(() => {
+      const marker = markerRefs.current[loc.location_id];
+      if (marker) marker.openPopup();
+    }, 900);
+  }, []);
+
+  // When user clicks a service (from list OR from popup): show detail panel
+  const handleServiceClick = useCallback((service) => {
+    setSelectedService(service);
+    // If it has a location, fly there too
+    if (service._primary_loc?.latitude && service._primary_loc?.longitude) {
+      setFlyTo([service._primary_loc.latitude, service._primary_loc.longitude]);
+    }
+  }, []);
+
+  const handleBackFromDetail = () => {
+    setSelectedService(null);
+  };
+
   // Filtered services
   const filteredServices = services.filter((s) => {
-    if (
-        activeCategories.length > 0 &&
-        !s._categories.some((c) => activeCategories.includes(c))
-    )
+    if (activeCategories.length > 0 && !s._categories.some((c) => activeCategories.includes(c)))
       return false;
     if (activeTypes.length > 0 && !activeTypes.includes(s.type)) return false;
     const q = searchQuery.toLowerCase().trim();
@@ -220,7 +244,11 @@ export default function App() {
     setHighlightedIds(results.map((s) => s.service_id));
     setShowChat(false);
     setActiveTab('diensten');
+    setSelectedService(null);
   };
+
+  // Determine what the left panel shows
+  const showDetail = !!selectedService;
 
   return (
       <div className="app-layout">
@@ -242,182 +270,166 @@ export default function App() {
         <div className="main-area">
           {/* LEFT PANEL */}
           <aside className="left-panel">
-            <div className="search-area">
-              {csvError && (
-                  <div
-                      style={{
-                        background: '#fdf0ec',
-                        border: '1px solid #f4b8a4',
-                        borderRadius: 8,
-                        padding: '8px 12px',
-                        marginBottom: 10,
-                        fontSize: 13,
-                        color: '#c8421e',
-                      }}
-                  >
-                    ⚠️ Sorry, de diensten konden niet worden geladen. Probeer de pagina te vernieuwen.
-                  </div>
-              )}
-              <div className="search-row">
-                <div className="input-wrap">
-                  <span className="input-icon">🔍</span>
-                  <input
-                      type="text"
-                      className="search-input"
-                      placeholder="Wat heb je nodig?"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <input
-                    type="text"
-                    className="postcode-input"
-                    placeholder="Postcode"
-                    value={postcode}
-                    onChange={(e) => setPostcode(e.target.value)}
-                    maxLength={7}
-                />
-              </div>
-              <div className="filter-row">
-                {['Regeling', 'Informatie', 'Ondersteuning'].map((t) => (
-                    <button
-                        key={t}
-                        className={`type-chip ${activeTypes.includes(t) ? 'active' : ''}`}
-                        onClick={() => toggleType(t)}
-                    >
-                      {t}
-                    </button>
-                ))}
-              </div>
-              <button className="search-btn" onClick={() => {}}>
-                Zoeken
-              </button>
-            </div>
 
-            {/* Category chips */}
-            <div className="cat-chips">
-              {CATEGORIES.map((cat) => (
-                  <button
-                      key={cat}
-                      className={`cat-chip ${activeCategories.includes(cat) ? 'active' : ''}`}
-                      style={{
-                        background: activeCategories.includes(cat)
-                            ? CATEGORY_COLORS[cat]
-                            : 'white',
-                        borderColor: CATEGORY_COLORS[cat],
-                        color: activeCategories.includes(cat)
-                            ? 'white'
-                            : CATEGORY_COLORS[cat],
-                      }}
-                      onClick={() => toggleCategory(cat)}
-                  >
-                    {cat}
-                  </button>
-              ))}
-            </div>
-
-            {/* Tabs */}
-            <div className="tabs">
-              <button
-                  className={`tab-btn ${activeTab === 'locaties' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('locaties')}
-              >
-                Locaties ({filteredLocations.length})
-              </button>
-              <button
-                  className={`tab-btn ${activeTab === 'diensten' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('diensten')}
-              >
-                Alle diensten ({filteredServices.length})
-              </button>
-            </div>
-
-            {/* Results */}
-            <div className="results-list">
-              {loading ? (
-                  <div className="empty-state">
-                    <div className="loading-dots">
-                      <span /><span /><span />
-                    </div>
-                    <p>Diensten laden...</p>
-                  </div>
-              ) : activeTab === 'locaties' ? (
-                  filteredLocations.length === 0 ? (
-                      <div className="empty-state">
-                        <span className="empty-icon">📍</span>
-                        <p>Geen locaties gevonden.<br />Pas je filters aan.</p>
-                      </div>
-                  ) : (
-                      filteredLocations.map((loc, i) => (
-                          <div
-                              key={loc.location_id}
-                              className="location-card"
-                              style={{ animationDelay: `${i * 0.03}s` }}
-                              onClick={() => setMapCenter([loc.latitude, loc.longitude])}
-                          >
-                            <div className="loc-card-header">
-                              <div
-                                  className="loc-type-dot"
-                                  style={{
-                                    background: LOC_TYPE_COLORS[loc.location_type] || '#999',
-                                  }}
-                              />
-                              <div className="loc-name">{loc.name}</div>
-                            </div>
-                            <div className="loc-address">{loc.address}</div>
-                            <div className="loc-services-count">
-                              {loc.services.length} dienst{loc.services.length !== 1 ? 'en' : ''}
-                              {' · '}
-                              <span style={{ color: LOC_TYPE_COLORS[loc.location_type] }}>
-                        {LOC_TYPE_LABELS[loc.location_type] || loc.location_type}
-                      </span>
-                            </div>
-                          </div>
-                      ))
-                  )
-              ) : filteredServices.length === 0 ? (
-                  <div className="empty-state">
-                    <span className="empty-icon">🔎</span>
-                    <p>Geen diensten gevonden.<br />Probeer andere zoektermen.</p>
-                  </div>
-              ) : (
-                  filteredServices.map((s, i) => {
-                    const catColor = getCategoryColor(s._categories);
-                    const isHighlighted = highlightedIds.includes(s.service_id);
-                    const accessType = s._access_type;
-                    return (
-                        <div
-                            key={s.service_id || i}
-                            className={`service-card ${isHighlighted ? 'highlighted' : ''}`}
-                            style={{ animationDelay: `${i * 0.03}s` }}
-                        >
-                          <div className="card-header">
-                            <div
-                                className="card-cat-dot"
-                                style={{ background: catColor }}
-                            />
-                            <div className="card-name">{s.name}</div>
-                            {s.type && (
-                                <span className="card-type-badge">{s.type}</span>
-                            )}
-                          </div>
-                          <div className="card-desc">{s.description}</div>
-                          <div className="card-footer">
-                            {accessType && (
-                                <span className="card-access">
-                          {ACCESS_ICONS[accessType] || '•'}{' '}
-                                  {ACCESS_LABELS[accessType] || accessType}
-                        </span>
-                            )}
-                            {s.cost_to_user && s.cost_to_user !== '###' && (
-                                <span className="card-cost">{s.cost_to_user}</span>
-                            )}
-                          </div>
+            {/* Search + filters — hidden when detail is shown */}
+            {!showDetail && (
+                <>
+                  <div className="search-area">
+                    {csvError && (
+                        <div style={{ background: '#fdf0ec', border: '1px solid #f4b8a4', borderRadius: 8, padding: '8px 12px', marginBottom: 10, fontSize: 13, color: '#c8421e' }}>
+                          ⚠️ Sorry, de diensten konden niet worden geladen.
                         </div>
-                    );
-                  })
-              )}
-            </div>
+                    )}
+                    <div className="search-row">
+                      <div className="input-wrap">
+                        <span className="input-icon">🔍</span>
+                        <input
+                            type="text"
+                            className="search-input"
+                            placeholder="Wat heb je nodig?"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
+                      <input
+                          type="text"
+                          className="postcode-input"
+                          placeholder="Postcode"
+                          value={postcode}
+                          onChange={(e) => setPostcode(e.target.value)}
+                          maxLength={7}
+                      />
+                    </div>
+                    <div className="filter-row">
+                      {['Regeling', 'Informatie', 'Ondersteuning'].map((t) => (
+                          <button
+                              key={t}
+                              className={`type-chip ${activeTypes.includes(t) ? 'active' : ''}`}
+                              onClick={() => toggleType(t)}
+                          >
+                            {t}
+                          </button>
+                      ))}
+                    </div>
+                    <button className="search-btn" onClick={() => {}}>Zoeken</button>
+                  </div>
+
+                  <div className="cat-chips">
+                    {CATEGORIES.map((cat) => (
+                        <button
+                            key={cat}
+                            className={`cat-chip ${activeCategories.includes(cat) ? 'active' : ''}`}
+                            style={{
+                              background: activeCategories.includes(cat) ? CATEGORY_COLORS[cat] : 'white',
+                              borderColor: CATEGORY_COLORS[cat],
+                              color: activeCategories.includes(cat) ? 'white' : CATEGORY_COLORS[cat],
+                            }}
+                            onClick={() => toggleCategory(cat)}
+                        >
+                          {cat}
+                        </button>
+                    ))}
+                  </div>
+
+                  <div className="tabs">
+                    <button
+                        className={`tab-btn ${activeTab === 'locaties' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('locaties')}
+                    >
+                      Locaties ({filteredLocations.length})
+                    </button>
+                    <button
+                        className={`tab-btn ${activeTab === 'diensten' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('diensten')}
+                    >
+                      Alle diensten ({filteredServices.length})
+                    </button>
+                  </div>
+                </>
+            )}
+
+            {/* Content: detail OR list */}
+            {showDetail ? (
+                <ServiceDetail service={selectedService} onBack={handleBackFromDetail} />
+            ) : (
+                <div className="results-list">
+                  {dataLoading ? (
+                      <div className="empty-state">
+                        <div className="loading-dots"><span /><span /><span /></div>
+                        <p>Diensten laden...</p>
+                      </div>
+                  ) : activeTab === 'locaties' ? (
+                      filteredLocations.length === 0 ? (
+                          <div className="empty-state">
+                            <span className="empty-icon">📍</span>
+                            <p>Geen locaties gevonden.<br />Pas je filters aan.</p>
+                          </div>
+                      ) : (
+                          filteredLocations.map((loc, i) => (
+                              <div
+                                  key={loc.location_id}
+                                  className="location-card"
+                                  style={{ animationDelay: `${i * 0.03}s`, cursor: 'pointer' }}
+                                  onClick={() => handleLocationCardClick(loc)}
+                              >
+                                <div className="loc-card-header">
+                                  <div
+                                      className="loc-type-dot"
+                                      style={{ background: LOC_TYPE_COLORS[loc.location_type] || '#999' }}
+                                  />
+                                  <div className="loc-name">{loc.name}</div>
+                                </div>
+                                <div className="loc-address">{loc.address}</div>
+                                <div className="loc-services-count">
+                                  {loc.services.length} dienst{loc.services.length !== 1 ? 'en' : ''}
+                                  {' · '}
+                                  <span style={{ color: LOC_TYPE_COLORS[loc.location_type] }}>
+                          {LOC_TYPE_LABELS[loc.location_type] || loc.location_type}
+                        </span>
+                                </div>
+                              </div>
+                          ))
+                      )
+                  ) : (
+                      filteredServices.length === 0 ? (
+                          <div className="empty-state">
+                            <span className="empty-icon">🔎</span>
+                            <p>Geen diensten gevonden.<br />Probeer andere zoektermen.</p>
+                          </div>
+                      ) : (
+                          filteredServices.map((s, i) => {
+                            const catColor = getCategoryColor(s._categories);
+                            const isHighlighted = highlightedIds.includes(s.service_id);
+                            return (
+                                <div
+                                    key={s.service_id || i}
+                                    className={`service-card ${isHighlighted ? 'highlighted' : ''}`}
+                                    style={{ animationDelay: `${i * 0.03}s`, cursor: 'pointer' }}
+                                    onClick={() => handleServiceClick(s)}
+                                >
+                                  <div className="card-header">
+                                    <div className="card-cat-dot" style={{ background: catColor }} />
+                                    <div className="card-name">{s.name}</div>
+                                    {s.type && <span className="card-type-badge">{s.type}</span>}
+                                  </div>
+                                  <div className="card-desc">{s.description}</div>
+                                  <div className="card-footer">
+                                    {s._access_type && (
+                                        <span className="card-access">
+                              {ACCESS_ICONS[s._access_type] || '•'} {ACCESS_LABELS[s._access_type] || s._access_type}
+                            </span>
+                                    )}
+                                    {s.cost_to_user && s.cost_to_user !== '###' && (
+                                        <span className="card-cost">{s.cost_to_user}</span>
+                                    )}
+                                  </div>
+                                </div>
+                            );
+                          })
+                      )
+                  )}
+                </div>
+            )}
           </aside>
 
           {/* MAP */}
@@ -426,10 +438,7 @@ export default function App() {
                 center={[52.1601, 4.497]}
                 zoom={13}
                 style={{ width: '100%', height: '100%' }}
-                maxBounds={[
-                  [52.08, 4.34],
-                  [52.24, 4.66],
-                ]}
+                maxBounds={[[52.08, 4.34], [52.24, 4.66]]}
                 maxBoundsViscosity={0.85}
                 minZoom={11}
             >
@@ -437,7 +446,7 @@ export default function App() {
                   url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
               />
-              {mapCenter && <MapController center={mapCenter} />}
+              <MapController flyTo={flyTo} />
               {locations
                   .filter((loc) => loc.latitude && loc.longitude)
                   .map((loc) => (
@@ -445,8 +454,11 @@ export default function App() {
                           key={loc.location_id}
                           position={[loc.latitude, loc.longitude]}
                           icon={createLeafletIcon(loc.location_type)}
+                          ref={(ref) => {
+                            if (ref) markerRefs.current[loc.location_id] = ref;
+                          }}
                       >
-                        <Popup>
+                        <Popup maxWidth={280}>
                           <div className="popup-name">{loc.name}</div>
                           <div
                               className="popup-type"
@@ -455,17 +467,23 @@ export default function App() {
                             {LOC_TYPE_LABELS[loc.location_type] || loc.location_type}
                           </div>
                           <div className="popup-address">{loc.address}</div>
-                          {loc.services.slice(0, 5).map((s, i) => (
-                              <div key={i} className="popup-service-item">
-                                {s.name}
-                              </div>
-                          ))}
-                          {loc.services.length > 5 && (
-                              <div
-                                  className="popup-service-item"
-                                  style={{ color: '#9e9890' }}
-                              >
-                                +{loc.services.length - 5} meer
+                          {loc.services.length > 0 && (
+                              <div style={{ marginTop: 6 }}>
+                                {loc.services.slice(0, 6).map((s, i) => (
+                                    <div
+                                        key={i}
+                                        className="popup-service-item popup-service-clickable"
+                                        onClick={() => handleServiceClick(s)}
+                                    >
+                                      {s.name}
+                                      <span className="popup-service-arrow">→</span>
+                                    </div>
+                                ))}
+                                {loc.services.length > 6 && (
+                                    <div className="popup-service-item" style={{ color: '#9e9890', fontStyle: 'italic' }}>
+                                      +{loc.services.length - 6} meer diensten
+                                    </div>
+                                )}
                               </div>
                           )}
                         </Popup>
@@ -477,8 +495,7 @@ export default function App() {
 
         {/* GDPR */}
         <footer className="gdpr-footer">
-          Ray slaat geen gegevens op. Alles verdwijnt zodra je dit venster sluit. |
-          Gemeente Leiden Sociale Kaart
+          Ray slaat geen gegevens op. Alles verdwijnt zodra je dit venster sluit. | Gemeente Leiden Sociale Kaart
         </footer>
 
         {/* CHATBOT */}
