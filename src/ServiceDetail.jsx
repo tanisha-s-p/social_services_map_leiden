@@ -10,13 +10,17 @@ const ACCESS_ICONS = {
     referral_only: '📋',
 };
 
-export default function ServiceDetail({ service, onBack }) {
+export default function ServiceDetail({ service, locationsMap = {}, onBack }) {
     if (!service) return null;
 
     const catColor = getCategoryColor(service._categories);
     const cats = service._categories || [];
-    const loc = service._primary_loc;
     const accessType = service._access_type;
+
+    // Resolve all locations for this service
+    const allLocs = (service._loc_ids || [])
+        .map((id) => locationsMap[id])
+        .filter(Boolean);
 
     return (
         <div className="detail-panel">
@@ -110,22 +114,28 @@ export default function ServiceDetail({ service, onBack }) {
                     </div>
                 )}
 
-                {loc && (
+                {allLocs.length > 0 && (
                     <div className="detail-info-row">
                         <span className="detail-info-icon">📍</span>
-                        <div>
-                            <div className="detail-info-label">Locatie</div>
-                            <div className="detail-info-value">
-                <span
-                    className="detail-loc-name"
-                    style={{ color: LOC_TYPE_COLORS[loc.location_type] }}
-                >
-                  {loc.name}
-                </span>
-                                <br />
-                                <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>
-                  {loc.address}{loc.postcode ? `, ${loc.postcode}` : ''}
-                </span>
+                        <div style={{ flex: 1 }}>
+                            <div className="detail-info-label">
+                                {allLocs.length === 1 ? 'Locatie' : `Locaties (${allLocs.length})`}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                                {allLocs.map((l) => (
+                                    <div key={l.location_id}>
+                    <span
+                        className="detail-loc-name"
+                        style={{ color: LOC_TYPE_COLORS[l.location_type] }}
+                    >
+                      {l.name}
+                    </span>
+                                        <br />
+                                        <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                      {l.address}{l.postcode ? `, ${l.postcode}` : ''}
+                    </span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>

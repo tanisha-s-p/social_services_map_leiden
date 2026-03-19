@@ -180,10 +180,10 @@ export default function App() {
   }, []);
 
   // When user clicks a service (from list OR from popup): show detail panel
-  const handleServiceClick = useCallback((service) => {
+  // suppressFly = true when called from a popup (map should stay where it is)
+  const handleServiceClick = useCallback((service, suppressFly = false) => {
     setSelectedService(service);
-    // If it has a location, fly there too
-    if (service._primary_loc?.latitude && service._primary_loc?.longitude) {
+    if (!suppressFly && service._primary_loc?.latitude && service._primary_loc?.longitude) {
       setFlyTo([service._primary_loc.latitude, service._primary_loc.longitude]);
     }
   }, []);
@@ -350,7 +350,11 @@ export default function App() {
 
             {/* Content: detail OR list */}
             {showDetail ? (
-                <ServiceDetail service={selectedService} onBack={handleBackFromDetail} />
+                <ServiceDetail
+                    service={selectedService}
+                    locationsMap={locations.reduce((acc, l) => { acc[l.location_id] = l; return acc; }, {})}
+                    onBack={handleBackFromDetail}
+                />
             ) : (
                 <div className="results-list">
                   {dataLoading ? (
@@ -473,7 +477,7 @@ export default function App() {
                                     <div
                                         key={i}
                                         className="popup-service-item popup-service-clickable"
-                                        onClick={() => handleServiceClick(s)}
+                                        onClick={() => handleServiceClick(s, true)}
                                     >
                                       {s.name}
                                       <span className="popup-service-arrow">→</span>
