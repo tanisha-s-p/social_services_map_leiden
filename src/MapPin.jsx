@@ -3,40 +3,31 @@ import L from 'leaflet';
 import ReactDOMServer from 'react-dom/server';
 
 const LOC_COLORS = {
-  government: '#396933',
-  organization: '#385EFF',
-  hub: '#FADD5A',
-  library: '#555555',
+  government:   { stroke: '#4a7a44', fill: '#e8f2e6' },
+  organization: { stroke: '#3a5abf', fill: '#e5eaf8' },
+  hub:          { stroke: '#a07c10', fill: '#faf2d9' },
+  library:      { stroke: '#555555', fill: '#efefef' },
 };
 
-export function MapPinSVG({ type = 'organization', size = 40 }) {
+export function MapPinSVG({ type = 'organization', size = 32 }) {
   const color = LOC_COLORS[type] || LOC_COLORS.organization;
-  const s = size;
   return (
-    <svg
-      width={s}
-      height={s * 1.3}
-      viewBox="0 0 40 52"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M20 0C9 0 0 9 0 20C0 32 20 52 20 52C20 52 40 32 40 20C40 9 31 0 20 0Z"
-        fill={color}
-      />
-      <circle cx="20" cy="20" r="7" fill="white" opacity="0.9" />
-    </svg>
+      <svg width={size} height={size} viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="13" fill={color.fill} stroke={color.stroke} strokeWidth="2.5" />
+        <circle cx="16" cy="16" r="8" fill={color.stroke} />
+      </svg>
   );
 }
 
-export function createLeafletIcon(type, size = 40) {
+export function createLeafletIcon(type, size = 32) {
   const svgString = ReactDOMServer.renderToString(
-    <MapPinSVG type={type} size={size} />
+      <MapPinSVG type={type} size={size} />
   );
   return L.divIcon({
     html: svgString,
     className: '',
-    iconSize: [size, size * 1.3],
-    iconAnchor: [size / 2, size * 1.3],
-    popupAnchor: [0, -size * 1.1],
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -(size / 2 + 4)],
   });
 }

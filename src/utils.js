@@ -1,10 +1,10 @@
 export const CATEGORY_COLORS = {
-  'Onkosten en dagelijks leven': '#e78f32',
-  'Gezondheid en zorg': '#499fd2',
-  'Wonen en energie besparen': '#92c937',
-  'Kinderen en opgroeien': '#e5574c',
-  'Studeren en werken': '#df84c0',
-  'Hulp bij schulden': '#7a49a3',
+  'Onkosten en dagelijks leven': '#6b6b6b',
+  'Gezondheid en zorg': '#6b6b6b',
+  'Wonen en energie besparen': '#6b6b6b',
+  'Kinderen en opgroeien': '#6b6b6b',
+  'Studeren en werken': '#6b6b6b',
+  'Hulp bij schulden': '#6b6b6b',
 };
 
 export const CATEGORIES = Object.keys(CATEGORY_COLORS);
@@ -19,10 +19,10 @@ export const ACCESS_LABELS = {
 };
 
 export const LOC_TYPE_COLORS = {
-  government: '#396933',
-  organization: '#385EFF',
-  hub: '#d4a000',
-  library: '#555555',
+  government:   '#4a7a44',
+  organization: '#3a5abf',
+  hub:          '#a07c10',
+  library:      '#555555',
 };
 
 export const LOC_TYPE_LABELS = {
@@ -131,10 +131,6 @@ export function filterServices(services, answers) {
 }
 
 export function getCategoryColor(cats) {
-  if (!cats || cats.length === 0) return '#9e9890';
-  // Find first known category
-  for (const c of cats) {
-    if (CATEGORY_COLORS[c]) return CATEGORY_COLORS[c];
-  }
-  return '#9e9890';
+  if (!cats || cats.length === 0) return '#6b6b6b';
+  return CATEGORY_COLORS[cats[0]] || '#6b6b6b';
 }

@@ -261,7 +261,6 @@ export default function App() {
           </span>
           </div>
           <button className="hero-chat-btn" onClick={() => setShowChat(true)}>
-            <span style={{ fontSize: 16 }}>🧭</span>
             Vraag Ray om hulp
           </button>
         </header>
