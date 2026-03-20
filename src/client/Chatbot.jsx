@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { filterServices, CATEGORY_COLORS, CATEGORIES } from './utils';
+import { filterServices, CATEGORY_COLORS, CATEGORIES } from '../utils';
 
 const HOUSEHOLD_OPTIONS = [
   'Ik ben student',

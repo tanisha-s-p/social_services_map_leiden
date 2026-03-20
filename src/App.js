@@ -3,10 +3,10 @@ import Papa from 'papaparse';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import './App.css';
-import Chatbot from './Chatbot';
-import ServiceDetail from './ServiceDetail';
-import { createLeafletIcon } from './MapPin';
+import './client/SocialMap.css';
+import Chatbot from './client/Chatbot';
+import ServiceDetail from './client/ServiceDetail';
+import { createLeafletIcon } from './client/MapPin';
 import {
   CATEGORY_COLORS,
   CATEGORIES,
@@ -20,15 +20,15 @@ import {
 } from './utils';
 
 import { Routes, Route } from "react-router-dom";
-import Home from "./Home";
-import DBAdmin from "./DBAdmin";
+import IndexPage from "./IndexPage";
+import DBManager from "./manager/DBManager";
 import CustomerApp from "./CustomerApp";
 
 export default function App() {
   return (
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/admin" element={<DBAdmin />} />
+        <Route path="/" element={<IndexPage />} />
+        <Route path="/admin" element={<DBManager />} />
         <Route path="/app" element={<CustomerApp />} />
       </Routes>
   );
