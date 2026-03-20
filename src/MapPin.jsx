@@ -5,7 +5,7 @@ import ReactDOMServer from 'react-dom/server';
 const LOC_COLORS = {
   government:   { stroke: '#4a7a44', fill: '#e8f2e6' },
   organization: { stroke: '#3a5abf', fill: '#e5eaf8' },
-  hub:          { stroke: '#a07c10', fill: '#faf2d9' },
+  hub:          { stroke: '#935918', fill: '#faf2d9' },
   library:      { stroke: '#555555', fill: '#efefef' },
 };
 
