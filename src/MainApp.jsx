@@ -1,16 +1,14 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import IndexPage from "./IndexPage";
-import App from "./App";        // customer app
-import DBAdmin from "./manager/DBManager";
+import CustomerApp from "./CustomerApp";
+import DBManager from "./DBManager";
 
 export default function MainApp() {
     return (
-        <Router>
-            <Routes>
-                <Route path="/" element={<IndexPage />} />
-                <Route path="/app" element={<App />} />
-                <Route path="/admin" element={<DBAdmin />} />
-            </Routes>
-        </Router>
+        <Routes>
+            <Route path="/" element={<IndexPage />} />
+            <Route path="/app" element={<CustomerApp />} />
+            <Route path="/admin" element={<DBManager />} />
+        </Routes>
     );
 }

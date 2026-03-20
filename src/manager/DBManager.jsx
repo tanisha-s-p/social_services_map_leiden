@@ -1,4 +1,5 @@
 import { useState, createContext, useContext, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
 const now = new Date();
 const daysAgo = (d) => new Date(now.getTime() - d * 86400000).toISOString();
@@ -137,18 +138,39 @@ const LocTypeBadge = ({ lt }) => {
     return <Badge label={lt} style={{ background: c.bg, color: c.text }} />;
 };
 
-// ——— Modal Dialog ———
+// ——— Modal Dialog — fully opaque ———
 const Modal = ({ open, onClose, title, children, wide }) => {
     if (!open) return null;
     return (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
-             onClick={(e) => e.target === e.currentTarget && onClose()}>
-            <div style={{ background: "var(--color-background-primary)", borderRadius: 12, border: "0.5px solid var(--color-border-tertiary)", width: "100%", maxWidth: wide ? 720 : 520, maxHeight: "90vh", overflow: "auto" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "0.5px solid var(--color-border-tertiary)" }}>
-                    <span style={{ fontSize: 15, fontWeight: 500 }}>{title}</span>
-                    <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, lineHeight: 1, color: "var(--color-text-secondary)", padding: "0 4px" }}>×</button>
+        <div
+            style={{
+                position: "fixed", inset: 0,
+                background: "rgba(0,0,0,0.5)",
+                zIndex: 1000,
+                display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+            }}
+            onClick={(e) => e.target === e.currentTarget && onClose()}
+        >
+            <div style={{
+                background: "#ffffff",
+                borderRadius: 12,
+                border: "1px solid #e2e8f0",
+                width: "100%",
+                maxWidth: wide ? 720 : 520,
+                maxHeight: "90vh",
+                overflow: "auto",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+            }}>
+                <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "16px 20px",
+                    borderBottom: "1px solid #e2e8f0",
+                    background: "#ffffff",
+                }}>
+                    <span style={{ fontSize: 15, fontWeight: 500, color: "#1e293b" }}>{title}</span>
+                    <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, lineHeight: 1, color: "#64748b", padding: "0 4px" }}>×</button>
                 </div>
-                <div style={{ padding: "20px" }}>{children}</div>
+                <div style={{ padding: "20px", background: "#ffffff" }}>{children}</div>
             </div>
         </div>
     );
@@ -156,34 +178,39 @@ const Modal = ({ open, onClose, title, children, wide }) => {
 
 const Field = ({ label, children }) => (
     <div style={{ marginBottom: 14 }}>
-        <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "var(--color-text-secondary)", marginBottom: 4 }}>{label}</label>
+        <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#64748b", marginBottom: 4 }}>{label}</label>
         {children}
     </div>
 );
 
+const inputStyle = {
+    width: "100%", boxSizing: "border-box", height: 34, padding: "0 10px",
+    fontSize: 13, borderRadius: 6, border: "1px solid #cbd5e1",
+    background: "#ffffff", color: "#1e293b", outline: "none",
+};
+
 const Input = ({ value, onChange, placeholder, type = "text" }) => (
-    <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-           style={{ width: "100%", boxSizing: "border-box", height: 34, padding: "0 10px", fontSize: 13, borderRadius: 6, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-primary)", color: "var(--color-text-primary)", outline: "none" }} />
+    <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={inputStyle} />
 );
 
 const Select = ({ value, onChange, options }) => (
     <select value={value} onChange={e => onChange(e.target.value)}
-            style={{ width: "100%", height: 34, padding: "0 10px", fontSize: 13, borderRadius: 6, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-primary)", color: "var(--color-text-primary)", outline: "none" }}>
+        style={{ ...inputStyle, height: 34, padding: "0 10px" }}>
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
 );
 
 const Textarea = ({ value, onChange, rows = 3 }) => (
     <textarea value={value} onChange={e => onChange(e.target.value)} rows={rows}
-              style={{ width: "100%", boxSizing: "border-box", padding: "6px 10px", fontSize: 13, borderRadius: 6, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-primary)", color: "var(--color-text-primary)", outline: "none", resize: "vertical" }} />
+        style={{ ...inputStyle, height: "auto", padding: "6px 10px", resize: "vertical" }} />
 );
 
 const Btn = ({ onClick, variant = "primary", children, small }) => {
     const base = { border: "none", borderRadius: 6, cursor: "pointer", fontWeight: 500, whiteSpace: "nowrap" };
     const styles = {
         primary: { ...base, background: "#1E293B", color: "#fff", padding: small ? "5px 12px" : "7px 16px", fontSize: small ? 12 : 13 },
-        secondary: { ...base, background: "transparent", color: "var(--color-text-primary)", border: "0.5px solid var(--color-border-secondary)", padding: small ? "5px 12px" : "7px 16px", fontSize: small ? 12 : 13 },
-        danger: { ...base, background: "#FEE2E2", color: "#991B1B", border: "0.5px solid #FECACA", padding: small ? "5px 12px" : "7px 16px", fontSize: small ? 12 : 13 },
+        secondary: { ...base, background: "#f8fafc", color: "#1e293b", border: "1px solid #cbd5e1", padding: small ? "5px 12px" : "7px 16px", fontSize: small ? 12 : 13 },
+        danger: { ...base, background: "#FEE2E2", color: "#991B1B", border: "1px solid #FECACA", padding: small ? "5px 12px" : "7px 16px", fontSize: small ? 12 : 13 },
     };
     return <button onClick={onClick} style={styles[variant]}>{children}</button>;
 };
@@ -244,7 +271,7 @@ const ServiceForm = ({ svc, locations, onSave, onClose }) => {
                 <div style={{ gridColumn: "1 / -1" }}><Field label="Notities"><Textarea value={form.notes} onChange={set("notes")} rows={2} /></Field></div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <input type="checkbox" id="ref" checked={form.needs_referral} onChange={e => set("needs_referral")(e.target.checked)} />
-                    <label htmlFor="ref" style={{ fontSize: 13, color: "var(--color-text-primary)" }}>Verwijzing nodig</label>
+                    <label htmlFor="ref" style={{ fontSize: 13, color: "#1e293b" }}>Verwijzing nodig</label>
                 </div>
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
@@ -263,7 +290,7 @@ const OverviewPage = () => {
     const staleCount = services.filter(isStale).length;
 
     const recent = [...locations.map(l => ({ id: l.location_id, name: l.name, type: "Locatie", last_checked: l.last_checked })),
-        ...services.map(s => ({ id: s.service_id, name: s.name, type: "Dienst", last_checked: s.last_checked }))]
+    ...services.map(s => ({ id: s.service_id, name: s.name, type: "Dienst", last_checked: s.last_checked }))]
         .sort((a, b) => new Date(b.last_checked) - new Date(a.last_checked)).slice(0, 6);
 
     const stats = [
@@ -277,42 +304,42 @@ const OverviewPage = () => {
         <div>
             <div style={{ marginBottom: 24 }}>
                 <h1 style={{ fontSize: 20, fontWeight: 500, margin: "0 0 4px" }}>Overview</h1>
-                <p style={{ color: "var(--color-text-secondary)", fontSize: 13, margin: 0 }}>Welkom terug, Admin. Hier is een overzicht van uw database.</p>
+                <p style={{ color: "#64748b", fontSize: 13, margin: 0 }}>Welkom terug, Admin. Hier is een overzicht van uw database.</p>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 24 }}>
                 {stats.map(s => (
-                    <div key={s.label} style={{ background: s.warn ? "#FFF7ED" : "var(--color-background-secondary)", borderRadius: 8, padding: "14px 16px" }}>
-                        <div style={{ fontSize: 12, color: s.warn ? "#9A3412" : "var(--color-text-secondary)", marginBottom: 4 }}>{s.label}</div>
-                        <div style={{ fontSize: 26, fontWeight: 500, color: s.warn ? "#C2410C" : "var(--color-text-primary)" }}>{s.value}</div>
-                        <div style={{ fontSize: 11, color: s.warn ? "#EA580C" : "var(--color-text-tertiary)" }}>{s.sub}</div>
+                    <div key={s.label} style={{ background: s.warn ? "#FFF7ED" : "#f8fafc", borderRadius: 8, padding: "14px 16px" }}>
+                        <div style={{ fontSize: 12, color: s.warn ? "#9A3412" : "#64748b", marginBottom: 4 }}>{s.label}</div>
+                        <div style={{ fontSize: 26, fontWeight: 500, color: s.warn ? "#C2410C" : "#1e293b" }}>{s.value}</div>
+                        <div style={{ fontSize: 11, color: s.warn ? "#EA580C" : "#94a3b8" }}>{s.sub}</div>
                     </div>
                 ))}
             </div>
 
-            <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 12, overflow: "hidden" }}>
-                <div style={{ padding: "14px 16px", borderBottom: "0.5px solid var(--color-border-tertiary)" }}>
+            <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden" }}>
+                <div style={{ padding: "14px 16px", borderBottom: "1px solid #e2e8f0" }}>
                     <span style={{ fontSize: 14, fontWeight: 500 }}>Recente activiteit</span>
                 </div>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                     <thead>
-                    <tr style={{ background: "var(--color-background-secondary)" }}>
-                        {["ID", "Naam", "Type", "Gecontroleerd"].map(h => (
-                            <th key={h} style={{ textAlign: "left", padding: "8px 14px", fontSize: 11, fontWeight: 500, color: "var(--color-text-secondary)", borderBottom: "0.5px solid var(--color-border-tertiary)" }}>{h}</th>
-                        ))}
-                    </tr>
+                        <tr style={{ background: "#f8fafc" }}>
+                            {["ID", "Naam", "Type", "Gecontroleerd"].map(h => (
+                                <th key={h} style={{ textAlign: "left", padding: "8px 14px", fontSize: 11, fontWeight: 500, color: "#64748b", borderBottom: "1px solid #e2e8f0" }}>{h}</th>
+                            ))}
+                        </tr>
                     </thead>
                     <tbody>
-                    {recent.map(r => (
-                        <tr key={r.id} style={{ borderBottom: "0.5px solid var(--color-border-tertiary)" }}>
-                            <td style={{ padding: "9px 14px", fontFamily: "monospace", fontSize: 12 }}>{r.id}</td>
-                            <td style={{ padding: "9px 14px", fontWeight: 500 }}>{r.name}</td>
-                            <td style={{ padding: "9px 14px" }}>
-                                <Badge label={r.type} style={{ background: r.type === "Locatie" ? "#DBEAFE" : "#EDE9FE", color: r.type === "Locatie" ? "#1E40AF" : "#5B21B6" }} />
-                            </td>
-                            <td style={{ padding: "9px 14px", color: "var(--color-text-secondary)" }}>{formatDate(r.last_checked)}</td>
-                        </tr>
-                    ))}
+                        {recent.map(r => (
+                            <tr key={r.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                                <td style={{ padding: "9px 14px", fontFamily: "monospace", fontSize: 12 }}>{r.id}</td>
+                                <td style={{ padding: "9px 14px", fontWeight: 500 }}>{r.name}</td>
+                                <td style={{ padding: "9px 14px" }}>
+                                    <Badge label={r.type} style={{ background: r.type === "Locatie" ? "#DBEAFE" : "#EDE9FE", color: r.type === "Locatie" ? "#1E40AF" : "#5B21B6" }} />
+                                </td>
+                                <td style={{ padding: "9px 14px", color: "#64748b" }}>{formatDate(r.last_checked)}</td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
             </div>
@@ -342,17 +369,17 @@ const LocationsPage = () => {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                 <div>
                     <h1 style={{ fontSize: 20, fontWeight: 500, margin: "0 0 2px" }}>Locaties</h1>
-                    <p style={{ color: "var(--color-text-secondary)", fontSize: 13, margin: 0 }}>Beheer alle locaties in de database</p>
+                    <p style={{ color: "#64748b", fontSize: 13, margin: 0 }}>Beheer alle locaties in de database</p>
                 </div>
                 <Btn onClick={() => { setEditLoc(null); setDialogOpen(true); }}>+ Nieuwe locatie</Btn>
             </div>
 
-            <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 12, overflow: "hidden" }}>
-                <div style={{ display: "flex", gap: 10, padding: 14, borderBottom: "0.5px solid var(--color-border-tertiary)", flexWrap: "wrap" }}>
+            <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden" }}>
+                <div style={{ display: "flex", gap: 10, padding: 14, borderBottom: "1px solid #e2e8f0", flexWrap: "wrap" }}>
                     <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Zoek locatie..."
-                           style={{ flex: 1, minWidth: 160, height: 32, padding: "0 10px", fontSize: 13, borderRadius: 6, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-secondary)", color: "var(--color-text-primary)", outline: "none" }} />
+                        style={{ flex: 1, minWidth: 160, height: 32, padding: "0 10px", fontSize: 13, borderRadius: 6, border: "1px solid #cbd5e1", background: "#f8fafc", color: "#1e293b", outline: "none" }} />
                     <select value={filterType} onChange={e => setFilterType(e.target.value)}
-                            style={{ height: 32, padding: "0 8px", fontSize: 13, borderRadius: 6, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-secondary)", color: "var(--color-text-primary)" }}>
+                        style={{ height: 32, padding: "0 8px", fontSize: 13, borderRadius: 6, border: "1px solid #cbd5e1", background: "#f8fafc", color: "#1e293b" }}>
                         <option value="all">Alle types</option>
                         {types.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
@@ -360,36 +387,36 @@ const LocationsPage = () => {
                 <div style={{ overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                         <thead>
-                        <tr style={{ background: "var(--color-background-secondary)" }}>
-                            {["ID", "Naam", "Adres", "Postcode", "Type", "Gecontroleerd"].map(h => (
-                                <th key={h} style={{ textAlign: "left", padding: "8px 12px", fontSize: 11, fontWeight: 500, color: "var(--color-text-secondary)", borderBottom: "0.5px solid var(--color-border-tertiary)" }}>{h}</th>
-                            ))}
-                        </tr>
+                            <tr style={{ background: "#f8fafc" }}>
+                                {["ID", "Naam", "Adres", "Postcode", "Type", "Gecontroleerd"].map(h => (
+                                    <th key={h} style={{ textAlign: "left", padding: "8px 12px", fontSize: 11, fontWeight: 500, color: "#64748b", borderBottom: "1px solid #e2e8f0" }}>{h}</th>
+                                ))}
+                            </tr>
                         </thead>
                         <tbody>
-                        {filtered.map(l => (
-                            <tr key={l.location_id} onClick={() => { setEditLoc(l); setDialogOpen(true); }}
-                                style={{ borderBottom: "0.5px solid var(--color-border-tertiary)", cursor: "pointer" }}
-                                onMouseEnter={e => e.currentTarget.style.background = "var(--color-background-secondary)"}
-                                onMouseLeave={e => e.currentTarget.style.background = ""}>
-                                <td style={{ padding: "9px 12px", fontFamily: "monospace", fontSize: 12 }}>{l.location_id}</td>
-                                <td style={{ padding: "9px 12px", fontWeight: 500 }}>{l.name}</td>
-                                <td style={{ padding: "9px 12px", color: "var(--color-text-secondary)" }}>{l.address}</td>
-                                <td style={{ padding: "9px 12px", fontFamily: "monospace", fontSize: 12 }}>{l.postcode}</td>
-                                <td style={{ padding: "9px 12px" }}><LocTypeBadge lt={l.location_type} /></td>
-                                <td style={{ padding: "9px 12px", color: "var(--color-text-secondary)" }}>{formatDate(l.last_checked)}</td>
-                            </tr>
-                        ))}
-                        {filtered.length === 0 && <tr><td colSpan={6} style={{ padding: "24px 12px", textAlign: "center", color: "var(--color-text-secondary)" }}>Geen locaties gevonden</td></tr>}
+                            {filtered.map(l => (
+                                <tr key={l.location_id} onClick={() => { setEditLoc(l); setDialogOpen(true); }}
+                                    style={{ borderBottom: "1px solid #e2e8f0", cursor: "pointer" }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = ""}>
+                                    <td style={{ padding: "9px 12px", fontFamily: "monospace", fontSize: 12 }}>{l.location_id}</td>
+                                    <td style={{ padding: "9px 12px", fontWeight: 500 }}>{l.name}</td>
+                                    <td style={{ padding: "9px 12px", color: "#64748b" }}>{l.address}</td>
+                                    <td style={{ padding: "9px 12px", fontFamily: "monospace", fontSize: 12 }}>{l.postcode}</td>
+                                    <td style={{ padding: "9px 12px" }}><LocTypeBadge lt={l.location_type} /></td>
+                                    <td style={{ padding: "9px 12px", color: "#64748b" }}>{formatDate(l.last_checked)}</td>
+                                </tr>
+                            ))}
+                            {filtered.length === 0 && <tr><td colSpan={6} style={{ padding: "24px 12px", textAlign: "center", color: "#64748b" }}>Geen locaties gevonden</td></tr>}
                         </tbody>
                     </table>
                 </div>
-                <div style={{ padding: "10px 14px", borderTop: "0.5px solid var(--color-border-tertiary)", fontSize: 12, color: "var(--color-text-secondary)" }}>{filtered.length} locaties</div>
+                <div style={{ padding: "10px 14px", borderTop: "1px solid #e2e8f0", fontSize: 12, color: "#64748b" }}>{filtered.length} locaties</div>
             </div>
 
             <Modal open={dialogOpen} onClose={() => setDialogOpen(false)} title={editLoc ? "Locatie bewerken" : "Nieuwe locatie"}>
                 <LocationForm loc={editLoc} onClose={() => setDialogOpen(false)}
-                              onSave={form => editLoc ? updateLocation(form) : addLocation(form)} />
+                    onSave={form => editLoc ? updateLocation(form) : addLocation(form)} />
             </Modal>
         </div>
     );
@@ -426,22 +453,22 @@ const ServicesPage = () => {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                 <div>
                     <h1 style={{ fontSize: 20, fontWeight: 500, margin: "0 0 2px" }}>Diensten</h1>
-                    <p style={{ color: "var(--color-text-secondary)", fontSize: 13, margin: 0 }}>Beheer alle diensten in de database</p>
+                    <p style={{ color: "#64748b", fontSize: 13, margin: 0 }}>Beheer alle diensten in de database</p>
                 </div>
                 <Btn onClick={() => { setEditSvc(null); setDialogOpen(true); }}>+ Nieuwe dienst</Btn>
             </div>
 
-            <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 12, overflow: "hidden" }}>
-                <div style={{ display: "flex", gap: 10, padding: 14, borderBottom: "0.5px solid var(--color-border-tertiary)", flexWrap: "wrap" }}>
+            <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden" }}>
+                <div style={{ display: "flex", gap: 10, padding: 14, borderBottom: "1px solid #e2e8f0", flexWrap: "wrap" }}>
                     <input value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} placeholder="Zoek op naam, ID, trefwoord..."
-                           style={{ flex: 1, minWidth: 180, height: 32, padding: "0 10px", fontSize: 13, borderRadius: 6, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-secondary)", color: "var(--color-text-primary)", outline: "none" }} />
+                        style={{ flex: 1, minWidth: 180, height: 32, padding: "0 10px", fontSize: 13, borderRadius: 6, border: "1px solid #cbd5e1", background: "#f8fafc", color: "#1e293b", outline: "none" }} />
                     <select value={filterCat} onChange={e => { setFilterCat(e.target.value); setPage(0); }}
-                            style={{ height: 32, padding: "0 8px", fontSize: 13, borderRadius: 6, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-secondary)", color: "var(--color-text-primary)" }}>
+                        style={{ height: 32, padding: "0 8px", fontSize: 13, borderRadius: 6, border: "1px solid #cbd5e1", background: "#f8fafc", color: "#1e293b" }}>
                         <option value="all">Alle categorieën</option>
                         {cats.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                     <select value={filterAccess} onChange={e => { setFilterAccess(e.target.value); setPage(0); }}
-                            style={{ height: 32, padding: "0 8px", fontSize: 13, borderRadius: 6, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-secondary)", color: "var(--color-text-primary)" }}>
+                        style={{ height: 32, padding: "0 8px", fontSize: 13, borderRadius: 6, border: "1px solid #cbd5e1", background: "#f8fafc", color: "#1e293b" }}>
                         <option value="all">Alle toegang</option>
                         {accesses.map(a => <option key={a} value={a}>{a}</option>)}
                     </select>
@@ -450,51 +477,51 @@ const ServicesPage = () => {
                 <div style={{ overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                         <thead>
-                        <tr style={{ background: "var(--color-background-secondary)" }}>
-                            {["", "Naam", "Categorie", "Type", "Kosten", "Toegang", "Locatie", "Gecontroleerd"].map((h, i) => (
-                                <th key={i} style={{ textAlign: "left", padding: "8px 12px", fontSize: 11, fontWeight: 500, color: "var(--color-text-secondary)", borderBottom: "0.5px solid var(--color-border-tertiary)", whiteSpace: "nowrap" }}>{h}</th>
-                            ))}
-                        </tr>
+                            <tr style={{ background: "#f8fafc" }}>
+                                {["", "Naam", "Categorie", "Type", "Kosten", "Toegang", "Locatie", "Gecontroleerd"].map((h, i) => (
+                                    <th key={i} style={{ textAlign: "left", padding: "8px 12px", fontSize: 11, fontWeight: 500, color: "#64748b", borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap" }}>{h}</th>
+                                ))}
+                            </tr>
                         </thead>
                         <tbody>
-                        {paged.map(s => (
-                            <tr key={s.service_id} onClick={() => { setEditSvc(s); setDialogOpen(true); }}
-                                style={{ borderBottom: "0.5px solid var(--color-border-tertiary)", cursor: "pointer" }}
-                                onMouseEnter={e => e.currentTarget.style.background = "var(--color-background-secondary)"}
-                                onMouseLeave={e => e.currentTarget.style.background = ""}>
-                                <td style={{ padding: "8px 10px 8px 14px", width: 24 }}>
-                                    {isStale(s) ? (
-                                        <button onClick={e => { e.stopPropagation(); verifyService(s.service_id); }}
+                            {paged.map(s => (
+                                <tr key={s.service_id} onClick={() => { setEditSvc(s); setDialogOpen(true); }}
+                                    style={{ borderBottom: "1px solid #e2e8f0", cursor: "pointer" }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = ""}>
+                                    <td style={{ padding: "8px 10px 8px 14px", width: 24 }}>
+                                        {isStale(s) ? (
+                                            <button onClick={e => { e.stopPropagation(); verifyService(s.service_id); }}
                                                 title="Verificatie verlopen — klik om te bevestigen"
                                                 style={{ background: "#FEE2E2", border: "none", borderRadius: 4, width: 22, height: 22, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#991B1B" }}>!</button>
-                                    ) : (
-                                        <span style={{ color: "#16A34A", fontSize: 14 }}>✓</span>
-                                    )}
-                                </td>
-                                <td style={{ padding: "8px 12px" }}>
-                                    <div style={{ fontWeight: 500 }}>{s.name}</div>
-                                    <div style={{ fontSize: 11, fontFamily: "monospace", color: "var(--color-text-secondary)" }}>{s.service_id}</div>
-                                </td>
-                                <td style={{ padding: "8px 12px" }}><CategoryBadge cat={s.category} /></td>
-                                <td style={{ padding: "8px 12px", color: "var(--color-text-secondary)" }}>{s.type}</td>
-                                <td style={{ padding: "8px 12px" }}>{s.cost_to_user}</td>
-                                <td style={{ padding: "8px 12px" }}><AccessBadge at={s.access_type} /></td>
-                                <td style={{ padding: "8px 12px", fontFamily: "monospace", fontSize: 12 }}>{s.location_id}</td>
-                                <td style={{ padding: "8px 12px", color: "var(--color-text-secondary)" }}>{formatDate(s.last_checked)}</td>
-                            </tr>
-                        ))}
-                        {paged.length === 0 && <tr><td colSpan={8} style={{ padding: "24px 12px", textAlign: "center", color: "var(--color-text-secondary)" }}>Geen diensten gevonden</td></tr>}
+                                        ) : (
+                                            <span style={{ color: "#16A34A", fontSize: 14 }}>✓</span>
+                                        )}
+                                    </td>
+                                    <td style={{ padding: "8px 12px" }}>
+                                        <div style={{ fontWeight: 500 }}>{s.name}</div>
+                                        <div style={{ fontSize: 11, fontFamily: "monospace", color: "#64748b" }}>{s.service_id}</div>
+                                    </td>
+                                    <td style={{ padding: "8px 12px" }}><CategoryBadge cat={s.category} /></td>
+                                    <td style={{ padding: "8px 12px", color: "#64748b" }}>{s.type}</td>
+                                    <td style={{ padding: "8px 12px" }}>{s.cost_to_user}</td>
+                                    <td style={{ padding: "8px 12px" }}><AccessBadge at={s.access_type} /></td>
+                                    <td style={{ padding: "8px 12px", fontFamily: "monospace", fontSize: 12 }}>{s.location_id}</td>
+                                    <td style={{ padding: "8px 12px", color: "#64748b" }}>{formatDate(s.last_checked)}</td>
+                                </tr>
+                            ))}
+                            {paged.length === 0 && <tr><td colSpan={8} style={{ padding: "24px 12px", textAlign: "center", color: "#64748b" }}>Geen diensten gevonden</td></tr>}
                         </tbody>
                     </table>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderTop: "0.5px solid var(--color-border-tertiary)" }}>
-                    <span style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>{filtered.length} resultaten</span>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderTop: "1px solid #e2e8f0" }}>
+                    <span style={{ fontSize: 12, color: "#64748b" }}>{filtered.length} resultaten</span>
                     {totalPages > 1 && (
                         <div style={{ display: "flex", gap: 4 }}>
                             {Array.from({ length: totalPages }, (_, i) => (
                                 <button key={i} onClick={() => setPage(i)}
-                                        style={{ width: 28, height: 28, borderRadius: 6, border: `0.5px solid ${i === page ? "#1E293B" : "var(--color-border-secondary)"}`, background: i === page ? "#1E293B" : "transparent", color: i === page ? "#fff" : "var(--color-text-primary)", cursor: "pointer", fontSize: 12, fontWeight: 500 }}>{i + 1}</button>
+                                    style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${i === page ? "#1E293B" : "#cbd5e1"}`, background: i === page ? "#1E293B" : "transparent", color: i === page ? "#fff" : "#1e293b", cursor: "pointer", fontSize: 12, fontWeight: 500 }}>{i + 1}</button>
                             ))}
                         </div>
                     )}
@@ -503,7 +530,7 @@ const ServicesPage = () => {
 
             <Modal open={dialogOpen} onClose={() => setDialogOpen(false)} title={editSvc ? "Dienst bewerken" : "Nieuwe dienst"} wide>
                 <ServiceForm svc={editSvc} locations={locations} onClose={() => setDialogOpen(false)}
-                             onSave={form => editSvc ? updateService(form) : addService(form)} />
+                    onSave={form => editSvc ? updateService(form) : addService(form)} />
             </Modal>
         </div>
     );
@@ -511,41 +538,44 @@ const ServicesPage = () => {
 
 // ——— Login Page ———
 const LoginPage = ({ onLogin }) => {
+    const navigate = useNavigate();
     const [user, setUser] = useState("");
     const [pass, setPass] = useState("");
     const [showPass, setShowPass] = useState(false);
 
     return (
-        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--color-background-secondary)", padding: 16 }}>
-            <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 12, width: "100%", maxWidth: 380, padding: 32 }}>
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f1f5f9", padding: 16 }}>
+            <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, width: "100%", maxWidth: 380, padding: 32 }}>
                 <div style={{ textAlign: "center", marginBottom: 28 }}>
                     <div style={{ width: 44, height: 44, background: "#1E293B", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 20 }}>
                         <span style={{ color: "#fff", fontSize: 18 }}>⬡</span>
                     </div>
                     <h2 style={{ fontSize: 20, fontWeight: 500, margin: "0 0 4px" }}>DBAdmin</h2>
-                    <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: 0 }}>Meld u aan om het beheerpaneel te openen</p>
+                    <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>Meld u aan om het beheerpaneel te openen</p>
                 </div>
                 <div style={{ marginBottom: 14 }}>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "var(--color-text-secondary)", marginBottom: 4 }}>Gebruikersnaam</label>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#64748b", marginBottom: 4 }}>Gebruikersnaam</label>
                     <input value={user} onChange={e => setUser(e.target.value)} placeholder="admin"
-                           style={{ width: "100%", boxSizing: "border-box", height: 36, padding: "0 10px", fontSize: 13, borderRadius: 6, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-primary)", color: "var(--color-text-primary)", outline: "none" }} />
+                        style={{ width: "100%", boxSizing: "border-box", height: 36, padding: "0 10px", fontSize: 13, borderRadius: 6, border: "1px solid #cbd5e1", background: "#ffffff", color: "#1e293b", outline: "none" }} />
                 </div>
                 <div style={{ marginBottom: 20 }}>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "var(--color-text-secondary)", marginBottom: 4 }}>Wachtwoord</label>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#64748b", marginBottom: 4 }}>Wachtwoord</label>
                     <div style={{ position: "relative" }}>
                         <input type={showPass ? "text" : "password"} value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••"
-                               style={{ width: "100%", boxSizing: "border-box", height: 36, padding: "0 36px 0 10px", fontSize: 13, borderRadius: 6, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-primary)", color: "var(--color-text-primary)", outline: "none" }} />
-                        <button onClick={() => setShowPass(!showPass)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--color-text-secondary)", fontSize: 13 }}>{showPass ? "🙈" : "👁"}</button>
+                            style={{ width: "100%", boxSizing: "border-box", height: 36, padding: "0 36px 0 10px", fontSize: 13, borderRadius: 6, border: "1px solid #cbd5e1", background: "#ffffff", color: "#1e293b", outline: "none" }} />
+                        <button onClick={() => setShowPass(!showPass)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#64748b", fontSize: 13 }}>{showPass ? "🙈" : "👁"}</button>
                     </div>
                 </div>
-                <button onClick={onLogin} style={{ width: "100%", height: 36, background: "#1E293B", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Inloggen</button>
+                <button onClick={onLogin} style={{ width: "100%", height: 36, background: "#1E293B", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: "pointer", marginBottom: 12 }}>Inloggen</button>
+                <button onClick={() => navigate("/")} style={{ width: "100%", height: 36, background: "transparent", color: "#64748b", border: "1px solid #cbd5e1", borderRadius: 6, fontSize: 13, cursor: "pointer" }}>← Terug naar hoofdmenu</button>
             </div>
         </div>
     );
 };
 
-// ——— Main App ———
-export default function App() {
+// ——— Main DBManager ———
+export default function DBManager() {
+    const navigate = useNavigate();
     const [loggedIn, setLoggedIn] = useState(false);
     const [page, setPage] = useState("overview");
 
@@ -559,34 +589,49 @@ export default function App() {
 
     return (
         <DataProvider>
-            <div style={{ display: "flex", height: "100vh", fontFamily: "var(--font-sans)", fontSize: 13, background: "var(--color-background-tertiary)" }}>
+            <div style={{ display: "flex", height: "100vh", fontFamily: "system-ui, -apple-system, sans-serif", fontSize: 13, background: "#f1f5f9" }}>
                 {/* Sidebar */}
-                <div style={{ width: 220, flexShrink: 0, background: "var(--color-background-primary)", borderRight: "0.5px solid var(--color-border-tertiary)", display: "flex", flexDirection: "column" }}>
-                    <div style={{ padding: "16px 16px 12px", borderBottom: "0.5px solid var(--color-border-tertiary)", display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 220, flexShrink: 0, background: "#ffffff", borderRight: "1px solid #e2e8f0", display: "flex", flexDirection: "column" }}>
+                    <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", gap: 10 }}>
                         <div style={{ width: 30, height: 30, background: "#1E293B", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "#fff", flexShrink: 0 }}>⬡</div>
                         <span style={{ fontWeight: 500, fontSize: 14 }}>DBAdmin</span>
                     </div>
                     <nav style={{ flex: 1, padding: "12px 8px" }}>
                         {navItems.map(item => (
                             <button key={item.id} onClick={() => setPage(item.id)}
-                                    style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 6, border: "none", cursor: "pointer", textAlign: "left", fontSize: 13, marginBottom: 2,
-                                        background: page === item.id ? "#F1F5F9" : "transparent",
-                                        color: page === item.id ? "#1E293B" : "var(--color-text-secondary)",
-                                        fontWeight: page === item.id ? 500 : 400 }}>
+                                style={{
+                                    width: "100%", display: "flex", alignItems: "center", gap: 10,
+                                    padding: "8px 10px", borderRadius: 6, border: "none", cursor: "pointer",
+                                    textAlign: "left", fontSize: 13, marginBottom: 2,
+                                    background: page === item.id ? "#F1F5F9" : "transparent",
+                                    color: page === item.id ? "#1E293B" : "#64748b",
+                                    fontWeight: page === item.id ? 500 : 400,
+                                }}>
                                 <span style={{ fontSize: 15 }}>{item.icon}</span>
                                 {item.label}
                             </button>
                         ))}
+                        {/* Return to main */}
+                        <button onClick={() => navigate("/")}
+                            style={{
+                                width: "100%", display: "flex", alignItems: "center", gap: 10,
+                                padding: "8px 10px", borderRadius: 6, border: "none", cursor: "pointer",
+                                textAlign: "left", fontSize: 13, marginTop: 8,
+                                background: "transparent", color: "#94a3b8",
+                            }}>
+                            <span style={{ fontSize: 15 }}>←</span>
+                            Hoofdmenu
+                        </button>
                     </nav>
-                    <div style={{ padding: "12px 16px", borderTop: "0.5px solid var(--color-border-tertiary)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ padding: "12px 16px", borderTop: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             <div style={{ width: 28, height: 28, background: "#1E293B", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#fff", fontWeight: 500 }}>A</div>
                             <div>
                                 <div style={{ fontSize: 12, fontWeight: 500 }}>Admin User</div>
-                                <div style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>admin@dbadmin.nl</div>
+                                <div style={{ fontSize: 11, color: "#64748b" }}>admin@dbadmin.nl</div>
                             </div>
                         </div>
-                        <button onClick={() => setLoggedIn(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-secondary)", fontSize: 14 }} title="Uitloggen">↩</button>
+                        <button onClick={() => setLoggedIn(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", fontSize: 14 }} title="Uitloggen">↩</button>
                     </div>
                 </div>
 
