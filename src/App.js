@@ -19,6 +19,22 @@ import {
   parseAccessType,
 } from './utils';
 
+import { Routes, Route } from "react-router-dom";
+import Home from "./Home";
+import DBAdmin from "./DBAdmin";
+import CustomerApp from "./CustomerApp";
+
+export default function App() {
+  return (
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/admin" element={<DBAdmin />} />
+        <Route path="/app" element={<CustomerApp />} />
+      </Routes>
+  );
+}
+
+
 delete L.Icon.Default.prototype._getIconUrl;
 
 const ACCESS_ICONS = {
@@ -128,7 +144,7 @@ function buildData(rawServices, rawLocations) {
   return { services: enriched, locations };
 }
 
-export default function App() {
+export function MainApp() {
   const [services, setServices] = useState([]);
   const [locations, setLocations] = useState([]);
   const [csvError, setCsvError] = useState(false);

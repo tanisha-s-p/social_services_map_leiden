@@ -51,7 +51,7 @@
   --shadow-lg: 0 16px 48px rgba(40,28,18,0.13);
 
   /* Typography */
-  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-display: 'DM Sans', system-ui, sans-serif;
   --font-body:    'DM Sans', system-ui, sans-serif;
 }
 
