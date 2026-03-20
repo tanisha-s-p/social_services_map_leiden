@@ -1,5 +1,5 @@
 import React from 'react';
-import { CATEGORY_COLORS, ACCESS_LABELS, LOC_TYPE_COLORS, LOC_TYPE_LABELS, getCategoryColor } from '../utils';
+import { CATEGORY_COLORS, ACCESS_LABELS, LOC_TYPE_COLORS, LOC_TYPE_LABELS, getCategoryColor } from './utils';
 
 const ACCESS_ICONS = {
     walkin: '🚶',
