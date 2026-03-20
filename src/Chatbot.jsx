@@ -15,11 +15,11 @@ const WIJKTEAM_PHONE = '071 - 516 78 77';
 
 // ─── Gemini API call ────────────────────────────────────────────────────────
 async function callGemini(prompt) {
-  const apiKey = process.env.example.REACT_APP_GEMINI_API_KEY;
+  const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
   if (!apiKey) throw new Error('Geen Gemini API-sleutel gevonden. Voeg REACT_APP_GEMINI_API_KEY toe aan je .env bestand.');
 
   const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -84,31 +84,53 @@ ${excluding}
 Hier zijn alle beschikbare diensten:
 ${serviceList}
 
-Kies de 3 meest passende diensten voor deze gebruiker. Geef je antwoord ALLEEN als geldig JSON, zonder markdown, zonder uitleg, zonder backticks. Gebruik exact dit formaat:
-{
-  "intro": "Een warme introductiezin van maximaal 2 zinnen die de gebruiker geruststelt.",
-  "results": [
-    {
-      "service_id": "SRV001",
-      "why": "Één zin die uitlegt waarom deze dienst past bij de situatie van de gebruiker."
-    },
-    {
-      "service_id": "SRV002",
-      "why": "Één zin die uitlegt waarom deze dienst past bij de situatie van de gebruiker."
-    },
-    {
-      "service_id": "SRV003",
-      "why": "Één zin die uitlegt waarom deze dienst past bij de situatie van de gebruiker."
-    }
-  ]
-}`;
+Kies de 3 meest passende diensten voor deze gebruiker.
+
+BELANGRIJK: Geef je antwoord ALLEEN als geldig JSON. Geen markdown, geen backticks, geen tekst ervoor of erna. Gebruik geen enters of speciale tekens binnen de string-waarden. Elke "intro" en "why" waarde moet op één regel staan zonder regelafbrekingen.
+
+Gebruik exact dit formaat:
+{"intro":"Een warme introductiezin van maximaal 2 zinnen.","results":[{"service_id":"SRV001","why":"Één zin waarom deze dienst past."},{"service_id":"SRV002","why":"Één zin waarom deze dienst past."},{"service_id":"SRV003","why":"Één zin waarom deze dienst past."}]}`;
 }
 
 // ─── Parse Gemini JSON response ──────────────────────────────────────────────
 function parseGeminiResponse(text) {
-  // Strip markdown code fences if present
-  const cleaned = text.replace(/```json|```/g, '').trim();
-  return JSON.parse(cleaned);
+  // 1. Strip markdown code fences
+  let cleaned = text.replace(/```json|```/gi, '').trim();
+
+  // 2. Extract the outermost {...} block in case Gemini added prose around it
+  const braceStart = cleaned.indexOf('{');
+  const braceEnd = cleaned.lastIndexOf('}');
+  if (braceStart !== -1 && braceEnd !== -1 && braceEnd > braceStart) {
+    cleaned = cleaned.slice(braceStart, braceEnd + 1);
+  }
+
+  // 3. Remove literal newlines/tabs inside string values (causes "Unterminated string" errors)
+  cleaned = cleaned
+      .replace(/[\r\n\t]+/g, ' ')
+      .replace(/\\n/g, ' ');
+
+  // 4. Try to parse
+  try {
+    return JSON.parse(cleaned);
+  } catch (firstErr) {
+    // 5. Regex fallback: extract service_ids and whys manually
+    const idMatches = [...text.matchAll(/"service_id"\s*:\s*"([^"]+)"/g)];
+    const whyMatches = [...text.matchAll(/"why"\s*:\s*"([^"]+)"/g)];
+    const introMatch = text.match(/"intro"\s*:\s*"([^"]+)"/);
+
+    if (idMatches.length > 0) {
+      return {
+        intro: introMatch ? introMatch[1] : '',
+        results: idMatches.map((m, i) => ({
+          service_id: m[1],
+          why: whyMatches[i] ? whyMatches[i][1] : '',
+        })),
+      };
+    }
+
+    // 6. Nothing worked
+    throw new Error('JSON parse mislukt: ' + firstErr.message);
+  }
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
