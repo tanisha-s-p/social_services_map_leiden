@@ -28,6 +28,7 @@ async function callGemini(prompt) {
           generationConfig: {
             temperature: 0.4,
             maxOutputTokens: 900,
+            responseMimeType: 'application/json',
           },
           systemInstruction: {
             parts: [{
@@ -93,46 +94,64 @@ Gebruik exact dit formaat:
 }
 
 // ─── Parse Gemini JSON response ──────────────────────────────────────────────
+// ─── Parse Gemini JSON response ──────────────────────────────────────────────
 function parseGeminiResponse(text) {
-  // 1. Strip markdown code fences
+  // Step 1: strip fences and trim
   let cleaned = text.replace(/```json|```/gi, '').trim();
 
-  // 2. Extract the outermost {...} block in case Gemini added prose around it
+  // Step 2: extract outermost { } block
   const braceStart = cleaned.indexOf('{');
   const braceEnd = cleaned.lastIndexOf('}');
-  if (braceStart !== -1 && braceEnd !== -1 && braceEnd > braceStart) {
+  if (braceStart !== -1 && braceEnd > braceStart) {
     cleaned = cleaned.slice(braceStart, braceEnd + 1);
   }
 
-  // 3. Remove literal newlines/tabs inside string values (causes "Unterminated string" errors)
+  // Step 3: sanitize ALL control characters and unicode line/para separators
+  // Replace every character that is illegal inside a JSON string value
   cleaned = cleaned
-      .replace(/[\r\n\t]+/g, ' ')
-      .replace(/\\n/g, ' ');
+      .replace(/\u2028/g, ' ')   // unicode line separator
+      .replace(/\u2029/g, ' ')   // unicode paragraph separator
+      .replace(/[\x00-\x1F\x7F]/g, ' '); // all ASCII control chars incl \r \n \t
 
-  // 4. Try to parse
+  // Step 4: attempt standard parse
   try {
     return JSON.parse(cleaned);
-  } catch (firstErr) {
-    // 5. Regex fallback: extract service_ids and whys manually
-    const idMatches = [...text.matchAll(/"service_id"\s*:\s*"([^"]+)"/g)];
-    const whyMatches = [...text.matchAll(/"why"\s*:\s*"([^"]+)"/g)];
-    const introMatch = text.match(/"intro"\s*:\s*"([^"]+)"/);
-
-    if (idMatches.length > 0) {
-      return {
-        intro: introMatch ? introMatch[1] : '',
-        results: idMatches.map((m, i) => ({
-          service_id: m[1],
-          why: whyMatches[i] ? whyMatches[i][1] : '',
-        })),
-      };
+  } catch (e) {
+    // Step 5: character-by-character string sanitizer as last resort
+    // Walk the JSON and replace any bare newline/tab found inside a string value
+    let inString = false;
+    let escaped = false;
+    let result = '';
+    for (let i = 0; i < cleaned.length; i++) {
+      const ch = cleaned[i];
+      if (escaped) {
+        result += ch;
+        escaped = false;
+        continue;
+      }
+      if (ch === '\\') {
+        escaped = true;
+        result += ch;
+        continue;
+      }
+      if (ch === '"') {
+        inString = !inString;
+        result += ch;
+        continue;
+      }
+      if (inString && (ch === '\n' || ch === '\r' || ch === '\t')) {
+        result += ' ';
+        continue;
+      }
+      result += ch;
     }
-
-    // 6. Nothing worked
-    throw new Error('JSON parse mislukt: ' + firstErr.message);
+    try {
+      return JSON.parse(result);
+    } catch (e2) {
+      throw new Error('JSON parse mislukt: ' + e2.message);
+    }
   }
 }
-
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function Chatbot({ services, onClose, onHighlight }) {
   // Steps: 0=gdpr, 1=categories, 2=age, 3=household, 4=description, 5=results, 6=satisfaction, 7=new-results
