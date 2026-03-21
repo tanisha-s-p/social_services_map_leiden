@@ -192,23 +192,28 @@ export default function App() {
     setSelectedService(null);
   };
 
-  // Filtered services
-  const filteredServices = services.filter((s) => {
-    if (activeCategories.length > 0 && !s._categories.some((c) => activeCategories.includes(c)))
-      return false;
-    if (activeTypes.length > 0 && !activeTypes.includes(s.type)) return false;
-    const q = searchQuery.toLowerCase().trim();
-    if (q) {
-      const match =
-          (s.name || '').toLowerCase().includes(q) ||
-          (s.description || '').toLowerCase().includes(q) ||
-          s._keywords.some((k) => k.toLowerCase().includes(q)) ||
-          (s.target_group || '').toLowerCase().includes(q);
-      if (!match) return false;
-    }
-    return true;
-  });
-
+  // Filtered services — highlighted ones always float to the top
+  const filteredServices = services
+      .filter((s) => {
+        if (activeCategories.length > 0 && !s._categories.some((c) => activeCategories.includes(c)))
+          return false;
+        if (activeTypes.length > 0 && !activeTypes.includes(s.type)) return false;
+        const q = searchQuery.toLowerCase().trim();
+        if (q) {
+          const match =
+              (s.name || '').toLowerCase().includes(q) ||
+              (s.description || '').toLowerCase().includes(q) ||
+              s._keywords.some((k) => k.toLowerCase().includes(q)) ||
+              (s.target_group || '').toLowerCase().includes(q);
+          if (!match) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const aTop = highlightedIds.includes(a.service_id) ? 0 : 1;
+        const bTop = highlightedIds.includes(b.service_id) ? 0 : 1;
+        return aTop - bTop;
+      });
   // Filtered locations
   const filteredLocations = locations.filter((loc) => {
     if (activeCategories.length > 0) {
@@ -242,7 +247,7 @@ export default function App() {
 
   const handleHighlight = (results) => {
     setHighlightedIds(results.map((s) => s.service_id));
-    setShowChat(false);
+    //setShowChat(false);
     setActiveTab('diensten');
     setSelectedService(null);
   };
@@ -400,13 +405,26 @@ export default function App() {
                             <span className="empty-icon">🔎</span>
                             <p>Geen diensten gevonden.<br />Probeer andere zoektermen.</p>
                           </div>
-                      ) : (
-                          filteredServices.map((s, i) => {
-                            const catColor = getCategoryColor(s._categories);
-                            const isHighlighted = highlightedIds.includes(s.service_id);
-                            return (
+                      ) : (() => {
+                        const recommended = filteredServices.filter((s) => highlightedIds.includes(s.service_id));
+                        const rest = filteredServices.filter((s) => !highlightedIds.includes(s.service_id));
+                        const sorted = [...recommended, ...rest];
+                        const showDivider = recommended.length > 0 && rest.length > 0;
+                        const showTopLabel = recommended.length > 0;
+                        return sorted.map((s, i) => {
+                          const catColor = getCategoryColor(s._categories);
+                          const isHighlighted = highlightedIds.includes(s.service_id);
+                          const isFirstRest = showDivider && i === recommended.length;
+                          const isFirstHighlighted = showTopLabel && i === 0;
+                          return (
+                              <React.Fragment key={s.service_id || i}>
+                                {isFirstHighlighted && (
+                                    <div className="list-divider" style={{ color: 'var(--accent)', borderColor: 'var(--accent-light)' }}>⭐ Aanbevolen door Ray</div>
+                                )}
+                                {isFirstRest && (
+                                    <div className="list-divider">Overige diensten</div>
+                                )}
                                 <div
-                                    key={s.service_id || i}
                                     className={`service-card ${isHighlighted ? 'highlighted' : ''}`}
                                     style={{ animationDelay: `${i * 0.03}s`, cursor: 'pointer' }}
                                     onClick={() => handleServiceClick(s)}
@@ -420,17 +438,18 @@ export default function App() {
                                   <div className="card-footer">
                                     {s._access_type && (
                                         <span className="card-access">
-                              {ACCESS_ICONS[s._access_type] || '•'} {ACCESS_LABELS[s._access_type] || s._access_type}
-                            </span>
+                                {ACCESS_ICONS[s._access_type] || '•'} {ACCESS_LABELS[s._access_type] || s._access_type}
+                              </span>
                                     )}
                                     {s.cost_to_user && s.cost_to_user !== '###' && (
                                         <span className="card-cost">{s.cost_to_user}</span>
                                     )}
                                   </div>
                                 </div>
-                            );
-                          })
-                      )
+                              </React.Fragment>
+                          );
+                        });
+                      })()
                   )}
                 </div>
             )}
