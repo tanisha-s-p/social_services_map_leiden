@@ -23,25 +23,26 @@ import {
 delete L.Icon.Default.prototype._getIconUrl;
 
 const ACCESS_ICONS = {
-    walkin: '🚶',
-    appointment: '📅',
-    home_visit: '🏠',
-    online: '💻',
-    phone: '📞',
+    walkin:        '🚶',
+    appointment:   '📅',
+    home_visit:    '🏠',
+    online:        '💻',
+    phone:         '📞',
     referral_only: '📋',
 };
 
 function parseCsv(text) {
     return new Promise((resolve, reject) => {
         Papa.parse(text, {
-            header: true,
+            header:         true,
             skipEmptyLines: true,
-            complete: (r) => resolve(r.data),
-            error: reject,
+            complete:       (r) => resolve(r.data),
+            error:          reject,
         });
     });
 }
 
+// Flies the map to a position
 function MapController({ flyTo }) {
     const map = useMap();
     useEffect(() => {
@@ -57,43 +58,40 @@ function buildData(rawServices, rawLocations) {
     rawLocations.forEach((loc) => {
         locMap[loc.location_id?.trim()] = {
             ...loc,
-            latitude: parseFloat(loc.latitude) || 0,
-            longitude: parseFloat(loc.longitude) || 0,
+            latitude:      parseFloat(loc.latitude)  || 0,
+            longitude:     parseFloat(loc.longitude) || 0,
             location_type: loc.location_type?.trim() || 'organization',
         };
     });
 
     const enriched = rawServices.map((s) => {
-        const cats = parseCategories(s.category);
-        const kws = parseKeywords(s.keywords);
+        const cats       = parseCategories(s.category);
+        const kws        = parseKeywords(s.keywords);
         const accessType = parseAccessType(s.access_type);
 
-        const locIds = (s.location_id || '')
-            .split(',')
-            .map((id) => id.trim())
-            .filter(Boolean);
+        const locIds    = (s.location_id || '').split(',').map((id) => id.trim()).filter(Boolean);
         const primaryLoc = locIds.length > 0 ? locMap[locIds[0]] : null;
 
         let age_min = 0, age_max = 99;
         const tg = (s.target_group || '').toLowerCase();
-        if (tg.includes('18 jaar')) age_min = 18;
-        if (tg.includes('16 jaar')) age_min = 16;
+        if (tg.includes('18 jaar'))                              age_min = 18;
+        if (tg.includes('16 jaar'))                              age_min = 16;
         if (tg.includes('jongeren') || tg.includes('30 jaar of jonger')) age_max = 30;
-        if (tg.includes('65+') || tg.includes('ouderen')) age_min = 65;
+        if (tg.includes('65+') || tg.includes('ouderen'))        age_min = 65;
         if (tg.includes('kinderen') && !tg.includes('met kinderen')) age_max = 18;
 
         return {
             ...s,
-            _categories: cats,
-            _keywords: kws,
+            _categories:  cats,
+            _keywords:    kws,
             _access_type: accessType,
-            _loc_ids: locIds,
+            _loc_ids:     locIds,
             _primary_loc: primaryLoc,
-            _lat: primaryLoc?.latitude || 0,
-            _lng: primaryLoc?.longitude || 0,
-            _loc_type: primaryLoc?.location_type || '',
-            _age_min: age_min,
-            _age_max: age_max,
+            _lat:         primaryLoc?.latitude  || 0,
+            _lng:         primaryLoc?.longitude || 0,
+            _loc_type:    primaryLoc?.location_type || '',
+            _age_min:     age_min,
+            _age_max:     age_max,
         };
     });
 
@@ -103,10 +101,10 @@ function buildData(rawServices, rawLocations) {
         if (!id) return;
         locWithServices[id] = {
             ...loc,
-            latitude: parseFloat(loc.latitude) || 0,
-            longitude: parseFloat(loc.longitude) || 0,
+            latitude:      parseFloat(loc.latitude)  || 0,
+            longitude:     parseFloat(loc.longitude) || 0,
             location_type: loc.location_type?.trim() || 'organization',
-            services: [],
+            services:      [],
         };
     });
 
@@ -119,7 +117,7 @@ function buildData(rawServices, rawLocations) {
     });
 
     const locations = Object.values(locWithServices).filter(
-        (l) => l.latitude && l.longitude
+        (l) => l.latitude && l.longitude,
     );
 
     return { services: enriched, locations };
@@ -128,20 +126,20 @@ function buildData(rawServices, rawLocations) {
 export default function CustomerApp() {
     const navigate = useNavigate();
 
-    const [services, setServices] = useState([]);
-    const [locations, setLocations] = useState([]);
-    const [csvError, setCsvError] = useState(false);
-    const [dataLoading, setDataLoading] = useState(true);
+    const [services,     setServices]     = useState([]);
+    const [locations,    setLocations]    = useState([]);
+    const [csvError,     setCsvError]     = useState(false);
+    const [dataLoading,  setDataLoading]  = useState(true);
 
-    const [activeTab, setActiveTab] = useState('locaties');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [postcode, setPostcode] = useState('');
+    const [activeTab,        setActiveTab]        = useState('locaties');
+    const [searchQuery,      setSearchQuery]      = useState('');
+    const [postcode,         setPostcode]         = useState('');
     const [activeCategories, setActiveCategories] = useState([]);
-    const [activeTypes, setActiveTypes] = useState([]);
-    const [showChat, setShowChat] = useState(false);
-    const [highlightedIds, setHighlightedIds] = useState([]);
-    const [selectedService, setSelectedService] = useState(null);
-    const [flyTo, setFlyTo] = useState(null);
+    const [activeTypes,      setActiveTypes]      = useState([]);
+    const [showChat,         setShowChat]         = useState(false);
+    const [highlightedIds,   setHighlightedIds]   = useState([]);
+    const [selectedService,  setSelectedService]  = useState(null);
+    const [flyTo,            setFlyTo]            = useState(null);
 
     const markerRefs = useRef({});
 
@@ -180,32 +178,40 @@ export default function CustomerApp() {
 
     const handleBackFromDetail = () => setSelectedService(null);
 
-    const filteredServices = services.filter((s) => {
-        if (activeCategories.length > 0 && !s._categories.some((c) => activeCategories.includes(c))) return false;
-        if (activeTypes.length > 0 && !activeTypes.includes(s.type)) return false;
-        const q = searchQuery.toLowerCase().trim();
-        if (q) {
-            const match =
-                (s.name || '').toLowerCase().includes(q) ||
-                (s.description || '').toLowerCase().includes(q) ||
-                s._keywords.some((k) => k.toLowerCase().includes(q)) ||
-                (s.target_group || '').toLowerCase().includes(q);
-            if (!match) return false;
-        }
-        return true;
-    });
+    // ── Filtered services — highlighted ones float to the top ──────────────────
+    const filteredServices = services
+        .filter((s) => {
+            if (activeCategories.length > 0 && !s._categories.some((c) => activeCategories.includes(c)))
+                return false;
+            if (activeTypes.length > 0 && !activeTypes.includes(s.type)) return false;
+            const q = searchQuery.toLowerCase().trim();
+            if (q) {
+                const match =
+                    (s.name        || '').toLowerCase().includes(q) ||
+                    (s.description || '').toLowerCase().includes(q) ||
+                    s._keywords.some((k) => k.toLowerCase().includes(q)) ||
+                    (s.target_group || '').toLowerCase().includes(q);
+                if (!match) return false;
+            }
+            return true;
+        })
+        .sort((a, b) => {
+            const aTop = highlightedIds.includes(a.service_id) ? 0 : 1;
+            const bTop = highlightedIds.includes(b.service_id) ? 0 : 1;
+            return aTop - bTop;
+        });
 
     const filteredLocations = locations.filter((loc) => {
         if (activeCategories.length > 0) {
             const hasCat = loc.services.some((s) =>
-                s._categories.some((c) => activeCategories.includes(c))
+                s._categories.some((c) => activeCategories.includes(c)),
             );
             if (!hasCat) return false;
         }
         const q = searchQuery.toLowerCase().trim();
         if (q) {
             const match =
-                (loc.name || '').toLowerCase().includes(q) ||
+                (loc.name    || '').toLowerCase().includes(q) ||
                 (loc.address || '').toLowerCase().includes(q) ||
                 loc.services.some((s) => (s.description || '').toLowerCase().includes(q));
             if (!match) return false;
@@ -215,13 +221,13 @@ export default function CustomerApp() {
 
     const toggleCategory = (cat) => {
         setActiveCategories((prev) =>
-            prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+            prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat],
         );
     };
 
     const toggleType = (type) => {
         setActiveTypes((prev) =>
-            prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+            prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
         );
     };
 
@@ -240,27 +246,34 @@ export default function CustomerApp() {
                 <div className="hero-brand">
                     <h1 className="hero-title">Sociale Kaart Leiden</h1>
                     <span className="hero-subtitle">
-                        Hulp en ondersteuning voor inwoners met een laag inkomen
-                    </span>
+            Hulp en ondersteuning voor inwoners met een laag inkomen
+          </span>
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                     <button
                         className="hero-chat-btn"
-                        style={{ background: 'rgba(255,255,255,0.15)', color: 'inherit', border: '1px solid rgba(255,255,255,0.4)' }}
+                        style={{
+                            background: 'rgba(255,255,255,0.15)',
+                            color:       'inherit',
+                            border:      '1px solid rgba(255,255,255,0.4)',
+                        }}
                         onClick={() => navigate('/')}
                     >
                         ← Hoofdmenu
                     </button>
                     <button className="hero-chat-btn" onClick={() => setShowChat(true)}>
+                        <span style={{ fontSize: 16 }}>🧭</span>
                         Vraag Ray om hulp
                     </button>
                 </div>
             </header>
 
-            {/* MAIN — map + left panel + optional chat side panel */}
-            <div className="main-area" style={{ position: 'relative', overflow: 'hidden' }}>
+            {/* MAIN */}
+            <div className="main-area">
+
                 {/* LEFT PANEL */}
                 <aside className="left-panel">
+
                     {!showDetail && (
                         <>
                             <div className="search-area">
@@ -309,9 +322,9 @@ export default function CustomerApp() {
                                         key={cat}
                                         className={`cat-chip ${activeCategories.includes(cat) ? 'active' : ''}`}
                                         style={{
-                                            background: activeCategories.includes(cat) ? CATEGORY_COLORS[cat] : 'white',
+                                            background:  activeCategories.includes(cat) ? CATEGORY_COLORS[cat] : 'white',
                                             borderColor: CATEGORY_COLORS[cat],
-                                            color: activeCategories.includes(cat) ? 'white' : CATEGORY_COLORS[cat],
+                                            color:       activeCategories.includes(cat) ? 'white' : CATEGORY_COLORS[cat],
                                         }}
                                         onClick={() => toggleCategory(cat)}
                                     >
@@ -337,6 +350,7 @@ export default function CustomerApp() {
                         </>
                     )}
 
+                    {/* Detail OR list */}
                     {showDetail ? (
                         <ServiceDetail
                             service={selectedService}
@@ -376,8 +390,8 @@ export default function CustomerApp() {
                                                 {loc.services.length} dienst{loc.services.length !== 1 ? 'en' : ''}
                                                 {' · '}
                                                 <span style={{ color: LOC_TYPE_COLORS[loc.location_type] }}>
-                                                    {LOC_TYPE_LABELS[loc.location_type] || loc.location_type}
-                                                </span>
+                          {LOC_TYPE_LABELS[loc.location_type] || loc.location_type}
+                        </span>
                                             </div>
                                         </div>
                                     ))
@@ -388,37 +402,58 @@ export default function CustomerApp() {
                                         <span className="empty-icon">🔎</span>
                                         <p>Geen diensten gevonden.<br />Probeer andere zoektermen.</p>
                                     </div>
-                                ) : (
-                                    filteredServices.map((s, i) => {
-                                        const catColor = getCategoryColor(s._categories);
+                                ) : (() => {
+                                    const recommended = filteredServices.filter((s) => highlightedIds.includes(s.service_id));
+                                    const rest        = filteredServices.filter((s) => !highlightedIds.includes(s.service_id));
+                                    const sorted      = [...recommended, ...rest];
+                                    const showDivider = recommended.length > 0 && rest.length > 0;
+                                    const showTopLabel = recommended.length > 0;
+
+                                    return sorted.map((s, i) => {
+                                        const catColor      = getCategoryColor(s._categories);
                                         const isHighlighted = highlightedIds.includes(s.service_id);
+                                        const isFirstRest        = showDivider   && i === recommended.length;
+                                        const isFirstHighlighted = showTopLabel  && i === 0;
+
                                         return (
-                                            <div
-                                                key={s.service_id || i}
-                                                className={`service-card ${isHighlighted ? 'highlighted' : ''}`}
-                                                style={{ animationDelay: `${i * 0.03}s`, cursor: 'pointer' }}
-                                                onClick={() => handleServiceClick(s)}
-                                            >
-                                                <div className="card-header">
-                                                    <div className="card-cat-dot" style={{ background: catColor }} />
-                                                    <div className="card-name">{s.name}</div>
-                                                    {s.type && <span className="card-type-badge">{s.type}</span>}
+                                            <React.Fragment key={s.service_id || i}>
+                                                {isFirstHighlighted && (
+                                                    <div
+                                                        className="list-divider"
+                                                        style={{ color: 'var(--accent)', borderColor: 'var(--accent-light)' }}
+                                                    >
+                                                        ⭐ Aanbevolen door Ray
+                                                    </div>
+                                                )}
+                                                {isFirstRest && (
+                                                    <div className="list-divider">Overige diensten</div>
+                                                )}
+                                                <div
+                                                    className={`service-card ${isHighlighted ? 'highlighted' : ''}`}
+                                                    style={{ animationDelay: `${i * 0.03}s`, cursor: 'pointer' }}
+                                                    onClick={() => handleServiceClick(s)}
+                                                >
+                                                    <div className="card-header">
+                                                        <div className="card-cat-dot" style={{ background: catColor }} />
+                                                        <div className="card-name">{s.name}</div>
+                                                        {s.type && <span className="card-type-badge">{s.type}</span>}
+                                                    </div>
+                                                    <div className="card-desc">{s.description}</div>
+                                                    <div className="card-footer">
+                                                        {s._access_type && (
+                                                            <span className="card-access">
+                                {ACCESS_ICONS[s._access_type] || '•'} {ACCESS_LABELS[s._access_type] || s._access_type}
+                              </span>
+                                                        )}
+                                                        {s.cost_to_user && s.cost_to_user !== '###' && (
+                                                            <span className="card-cost">{s.cost_to_user}</span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div className="card-desc">{s.description}</div>
-                                                <div className="card-footer">
-                                                    {s._access_type && (
-                                                        <span className="card-access">
-                                                            {ACCESS_ICONS[s._access_type] || '•'} {ACCESS_LABELS[s._access_type] || s._access_type}
-                                                        </span>
-                                                    )}
-                                                    {s.cost_to_user && s.cost_to_user !== '###' && (
-                                                        <span className="card-cost">{s.cost_to_user}</span>
-                                                    )}
-                                                </div>
-                                            </div>
+                                            </React.Fragment>
                                         );
-                                    })
-                                )
+                                    });
+                                })()
                             )}
                         </div>
                     )}
@@ -483,35 +518,21 @@ export default function CustomerApp() {
                             ))}
                     </MapContainer>
                 </div>
-
-                {/* CHATBOT SIDE PANEL */}
-                {showChat && (
-                    <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        height: '100%',
-                        width: 400,
-                        maxWidth: '90vw',
-                        zIndex: 500,
-                        boxShadow: '-4px 0 24px rgba(0,0,0,0.15)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        background: 'white',
-                    }}>
-                        <Chatbot
-                            services={services}
-                            onClose={() => setShowChat(false)}
-                            onHighlight={handleHighlight}
-                        />
-                    </div>
-                )}
             </div>
 
-            {/* GDPR */}
+            {/* GDPR footer */}
             <footer className="gdpr-footer">
                 Ray slaat geen gegevens op. Alles verdwijnt zodra je dit venster sluit. | Gemeente Leiden Sociale Kaart
             </footer>
+
+            {/* CHATBOT — rendered as an overlay modal (same as ai_feature) */}
+            {showChat && (
+                <Chatbot
+                    services={services}
+                    onClose={() => setShowChat(false)}
+                    onHighlight={handleHighlight}
+                />
+            )}
         </div>
     );
 }

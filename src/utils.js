@@ -1,41 +1,40 @@
+// ── Category colours (from ai_feature — the working, colourful version) ──────
 export const CATEGORY_COLORS = {
-  'Onkosten en dagelijks leven': '#6b6b6b',
-  'Gezondheid en zorg': '#6b6b6b',
-  'Wonen en energie besparen': '#6b6b6b',
-  'Kinderen en opgroeien': '#6b6b6b',
-  'Studeren en werken': '#6b6b6b',
-  'Hulp bij schulden': '#6b6b6b',
+  'Onkosten en dagelijks leven': '#e78f32',
+  'Gezondheid en zorg':          '#499fd2',
+  'Wonen en energie besparen':   '#92c937',
+  'Kinderen en opgroeien':       '#e5574c',
+  'Studeren en werken':          '#df84c0',
+  'Hulp bij schulden':           '#7a49a3',
 };
 
 export const CATEGORIES = Object.keys(CATEGORY_COLORS);
 
 export const ACCESS_LABELS = {
-  walkin: 'Inloop',
-  appointment: 'Op afspraak',
-  home_visit: 'Thuisbezoek',
-  online: 'Online',
-  phone: 'Telefonisch',
+  walkin:        'Inloop',
+  appointment:   'Op afspraak',
+  home_visit:    'Thuisbezoek',
+  online:        'Online',
+  phone:         'Telefonisch',
   referral_only: 'Via verwijzing',
 };
 
 export const LOC_TYPE_COLORS = {
-  government:   '#4a7a44',
-  organization: '#3a5abf',
-  hub:          '#a07c10',
+  government:   '#396933',
+  organization: '#385EFF',
+  hub:          '#d4a000',
   library:      '#555555',
 };
 
 export const LOC_TYPE_LABELS = {
-  government: 'Gemeente',
+  government:   'Gemeente',
   organization: 'Organisatie',
-  hub: 'Wijkhub',
-  library: 'Bibliotheek',
+  hub:          'Wijkhub',
+  library:      'Bibliotheek',
 };
 
-/**
- * Parse a raw category string (possibly comma-separated, possibly single)
- * into an array of known categories.
- */
+// ── Parsers ───────────────────────────────────────────────────────────────────
+
 export function parseCategories(raw) {
   if (!raw) return [];
   return raw
@@ -44,34 +43,26 @@ export function parseCategories(raw) {
       .filter((c) => CATEGORIES.includes(c));
 }
 
-/**
- * Parse keywords / tags from a CSV cell (comma or semicolon separated).
- */
 export function parseKeywords(raw) {
   if (!raw) return [];
   return raw.split(/[,;]/).map((k) => k.trim()).filter(Boolean);
 }
 
-/**
- * Parse access_type — may be comma-separated list, return first canonical value.
- */
 export function parseAccessType(raw) {
   if (!raw) return '';
   const types = ['walkin', 'appointment', 'home_visit', 'online', 'phone', 'referral_only'];
-  const parts = raw.split(/[,\s]+/).map((p) => p.trim());
+  const parts  = raw.split(/[,\s]+/).map((p) => p.trim());
   return parts.find((p) => types.includes(p)) || parts[0] || '';
 }
 
-/**
- * filterServices — takes the merged service+location objects and session answers.
- * Returns best 3 matches, or top 3 hubs as fallback.
- */
+// ── filterServices (used by Chatbot for local pre-filtering) ─────────────────
+
 export function filterServices(services, answers) {
   const {
     selected_categories = [],
-    age = '',
-    household_type = [],
-    selected_keywords = [],
+    age                  = '',
+    household_type       = [],
+    selected_keywords    = [],
   } = answers;
 
   let results = [...services];
@@ -90,7 +81,7 @@ export function filterServices(services, answers) {
     if (age === 'Onder 18') ageNum = 12;
     else if (age === '18–26') ageNum = 22;
     else if (age === '27–65') ageNum = 45;
-    else if (age === '65+') ageNum = 70;
+    else if (age === '65+')   ageNum = 70;
 
     if (ageNum !== null) {
       results = results.filter((s) => {
@@ -101,36 +92,37 @@ export function filterServices(services, answers) {
     }
   }
 
-  // 3. Household filter (ignore "wil ik niet zeggen")
-  const filteredHousehold = household_type.filter((h) => h !== 'Wil ik niet zeggen');
-  if (filteredHousehold.length > 0) {
-    // We don't have household_tags in the real data, so skip hard filtering
-    // but we can use target_group text matching as a soft signal
-    // Don't hard-filter — real data has no household_tags column
-  }
+  // 3. Household (soft — no household_tags column in real data)
+  // eslint-disable-next-line no-unused-vars
+  const _filteredHousehold = household_type.filter((h) => h !== 'Wil ik niet zeggen');
 
-  // 4. Keyword / search filter
+  // 4. Keyword / description filter
   if (selected_keywords.length > 0) {
     results = results.filter((s) => {
-      const kws = s._keywords || [];
+      const kws      = s._keywords || [];
       const haystack = `${s.name} ${s.description} ${s.target_group}`.toLowerCase();
       return selected_keywords.some(
-          (k) => kws.some((kw) => kw.toLowerCase().includes(k.toLowerCase())) ||
-              haystack.includes(k.toLowerCase())
+          (k) =>
+              kws.some((kw) => kw.toLowerCase().includes(k.toLowerCase())) ||
+              haystack.includes(k.toLowerCase()),
       );
     });
   }
 
-  // 5. Fallback
+  // 5. Fallback — return hub services
   if (results.length === 0) {
     return services.filter((s) => s._loc_type === 'hub').slice(0, 3);
   }
 
-  // 6. Best 3
   return results.slice(0, 3);
 }
 
+// ── Colour helper ─────────────────────────────────────────────────────────────
+
 export function getCategoryColor(cats) {
-  if (!cats || cats.length === 0) return '#6b6b6b';
-  return CATEGORY_COLORS[cats[0]] || '#6b6b6b';
+  if (!cats || cats.length === 0) return '#9e9890';
+  for (const c of cats) {
+    if (CATEGORY_COLORS[c]) return CATEGORY_COLORS[c];
+  }
+  return '#9e9890';
 }
