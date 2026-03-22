@@ -54,6 +54,7 @@ const csvToLocations = (csvText) => {
         latitude: parseFloat(row.latitude) || 0,
         longitude: parseFloat(row.longitude) || 0,
         location_type: row.location_type || row.type || 'Buurthuis',
+        google_map_link: row.google_map_link || '',
         last_checked: row.last_checked || new Date().toISOString(),
     })).filter(l => l.location_id && l.name);
 };
@@ -295,7 +296,7 @@ const Btn = ({ onClick, variant = "primary", children, small }) => {
 
 // ——— Location Form ———
 const LocationForm = ({ loc, onSave, onClose }) => {
-    const empty = { name: "", address: "", postcode: "", latitude: "", longitude: "", location_type: "Buurthuis" };
+    const empty = { name: "", address: "", postcode: "", latitude: "", longitude: "", location_type: "Buurthuis",google_map_link: "" };
     const [form, setForm] = useState(loc ? { ...loc } : empty);
     const set = (k) => (v) => setForm(f => ({ ...f, [k]: v }));
     const typeOpts = ["Buurthuis", "Wijkcentrum", "Gezondheidscentrum", "Bibliotheek", "Gemeentehuis", "Sporthal", "Voedselbank", "Jeugdhuis", "government", "organization", "hub"].map(t => ({ value: t, label: t }));
@@ -305,6 +306,7 @@ const LocationForm = ({ loc, onSave, onClose }) => {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div style={{ gridColumn: "1 / -1" }}><Field label="Naam"><Input value={form.name} onChange={set("name")} placeholder="Naam locatie" /></Field></div>
                 <div style={{ gridColumn: "1 / -1" }}><Field label="Adres"><Input value={form.address} onChange={set("address")} placeholder="Straat + huisnummer" /></Field></div>
+                <div style={{ gridColumn: "1 / -1" }}><Field label="Google Maps Link"><Input value={form.google_map_link} onChange={set("google_map_link")} placeholder="https://maps.google.com/..." /></Field></div>
                 <Field label="Postcode"><Input value={form.postcode} onChange={set("postcode")} placeholder="1234 AB" /></Field>
                 <Field label="Type"><Select value={form.location_type} onChange={set("location_type")} options={typeOpts} /></Field>
                 <Field label="Breedtegraad"><Input value={form.latitude} onChange={set("latitude")} placeholder="52.0907" /></Field>
@@ -465,7 +467,7 @@ const LocationsPage = () => {
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                         <thead>
                         <tr style={{ background: "#f8fafc" }}>
-                            {["Naam", "Adres", "Postcode", "Type", "Gecontroleerd"].map(h => (
+                            {["Naam", "Adres", "Google Maps", "Postcode", "Type", "Gecontroleerd"].map(h => (
                                 <th key={h} style={{ textAlign: "left", padding: "8px 12px", fontSize: 11, fontWeight: 500, color: "#64748b", borderBottom: "1px solid #e2e8f0" }}>{h}</th>
                             ))}
                         </tr>
@@ -478,6 +480,19 @@ const LocationsPage = () => {
                                 onMouseLeave={e => e.currentTarget.style.background = ""}>
                                 <td style={{ padding: "9px 12px", fontWeight: 500 }}>{l.name}</td>
                                 <td style={{ padding: "9px 12px", color: "#64748b" }}>{l.address}</td>
+                                <td style={{ padding: "9px 12px" }}>
+                                    {l.google_map_link ? (
+                                        <a 
+                                        href={l.google_map_link} 
+                                        target="_blank" 
+                                        rel="noreferrer" 
+                                        style={{ color: "#3b82f6", textDecoration: "none" }}
+                                        onClick={e => e.stopPropagation()} /* Prevents row click */
+                                        >
+                                            Link ↗
+                                        </a>
+                                    ) : "-"}
+                                </td>
                                 <td style={{ padding: "9px 12px", fontFamily: "monospace", fontSize: 12 }}>{l.postcode}</td>
                                 <td style={{ padding: "9px 12px" }}><LocTypeBadge lt={l.location_type} /></td>
                                 <td style={{ padding: "9px 12px", color: "#64748b" }}>{formatDate(l.last_checked)}</td>
