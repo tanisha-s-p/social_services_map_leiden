@@ -330,7 +330,7 @@ export default function CustomerApp() {
                         ← Hoofdmenu
                     </button>
                     <button className="hero-chat-btn" onClick={() => setShowChat(true)}>
-                        <span style={{ fontSize: 16 }}>🧭</span>
+                        <span style={{ fontSize: 16 }}></span>
                         Vraag Ray om hulp
                     </button>
                 </div>
@@ -347,7 +347,7 @@ export default function CustomerApp() {
                             <div className="search-area">
                                 {csvError && (
                                     <div style={{ background: '#fdf0ec', border: '1px solid #f4b8a4', borderRadius: 8, padding: '8px 12px', marginBottom: 10, fontSize: 13, color: '#c8421e' }}>
-                                        ⚠️ Sorry, de diensten konden niet worden geladen.
+                                        Sorry, de diensten konden niet worden geladen.
                                     </div>
                                 )}
                                 <div className="search-row">
@@ -528,7 +528,7 @@ export default function CustomerApp() {
                                                         className="list-divider"
                                                         style={{ color: 'var(--accent)', borderColor: 'var(--accent-light)' }}
                                                     >
-                                                        ⭐ Aanbevolen door Ray
+                                                        Aanbevolen door Ray
                                                     </div>
                                                 )}
                                                 {isFirstRest && (
