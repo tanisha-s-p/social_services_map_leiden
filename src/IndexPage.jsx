@@ -18,12 +18,12 @@ const t = {
     shadowSm:      "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
     shadowMd:      "0 4px 16px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)",
     shadowLg:      "0 12px 40px rgba(0,0,0,0.14)",
-    fontDisplay:   "'DM Serif Display', Georgia, serif",
-    fontBody:      "'DM Sans', system-ui, sans-serif",
+    fontDisplay:   "'Outfit', system-ui, sans-serif",
+    fontBody:      "'Outfit', system-ui, sans-serif",
 };
 
 const GOOGLE_FONTS =
-    "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap";
+    "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap";
 
 // ── Sub-component ─────────────────────────────────────────────────────────────
 function RoleCard({ icon, iconBg, title, description, cta, ctaColor, hoverBorder, onClick }) {
@@ -39,34 +39,26 @@ function RoleCard({ icon, iconBg, title, description, cta, ctaColor, hoverBorder
                 background: t.surface,
                 border: `1.5px solid ${hovered ? hoverBorder : t.border}`,
                 borderRadius: t.radiusLg,
-                padding: "26px 22px 22px",
+                padding: "22px 22px 20px",
                 cursor: "pointer",
-                textAlign: "left",
+                textAlign: "center",
                 transition: "border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease",
                 boxShadow: hovered ? t.shadowLg : t.shadowSm,
                 transform: hovered ? "translateY(-3px)" : "translateY(0)",
                 display: "flex",
                 flexDirection: "column",
-                gap: 12,
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 0,
                 fontFamily: t.fontBody,
+                minHeight: 120,
             }}
         >
-            <div style={{
-                width: 42,
-                height: 42,
-                background: iconBg,
-                borderRadius: t.radiusMd,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 20,
-            }}>{icon}</div>
-
-            <div>
+            <div style={{ marginBottom: 12 }}>
                 <div style={{
                     fontFamily: t.fontDisplay,
                     fontSize: 18,
-                    fontWeight: 400,
+                    fontWeight: 700,
                     color: t.textPrimary,
                     marginBottom: 5,
                     lineHeight: 1.2,
@@ -77,15 +69,15 @@ function RoleCard({ icon, iconBg, title, description, cta, ctaColor, hoverBorder
                     lineHeight: 1.55,
                 }}>{description}</div>
             </div>
-
+ 
             <div style={{
-                display: "inline-flex",
+                display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: 5,
                 fontSize: 13,
                 fontWeight: 600,
                 color: ctaColor,
-                marginTop: 2,
             }}>
                 {cta}
                 <span style={{
@@ -140,7 +132,7 @@ export default function IndexPage() {
                     <div style={{
                         fontFamily: t.fontDisplay,
                         fontSize: 20,
-                        fontWeight: 400,
+                        fontWeight: 700,
                         lineHeight: 1.2,
                     }}>
                         Leiden Sociale Kaart
@@ -172,7 +164,7 @@ export default function IndexPage() {
                     <h1 style={{
                         fontFamily: t.fontDisplay,
                         fontSize: 36,
-                        fontWeight: 400,
+                        fontWeight: 700,
                         color: t.textPrimary,
                         margin: "0 0 16px",
                         lineHeight: 1.2,
@@ -193,8 +185,6 @@ export default function IndexPage() {
                 {/* Role cards */}
                 <div style={{ display: "flex", gap: 18, flexWrap: "wrap", justifyContent: "center" }}>
                     <RoleCard
-                        icon="🧭"
-                        iconBg={t.accentLight}
                         title="Inwoner"
                         description="Zoek diensten en hulp in jouw buurt"
                         cta="Ga naar de kaart"
@@ -203,8 +193,6 @@ export default function IndexPage() {
                         onClick={() => navigate("/app")}
                     />
                     <RoleCard
-                        icon="⚙️"
-                        iconBg={t.surface2}
                         title="Medewerker"
                         description="Beheer diensten en locaties in het systeem"
                         cta="Naar beheer"
@@ -218,7 +206,6 @@ export default function IndexPage() {
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
                     {[
                         { icon: "🔒", text: "Geen gegevens opgeslagen" },
-                        { icon: "🆓", text: "Gratis te gebruiken" },
                         { icon: "📍", text: "Alleen voor Leiden" },
                     ].map(({ icon, text }, i, arr) => (
                         <React.Fragment key={text}>
