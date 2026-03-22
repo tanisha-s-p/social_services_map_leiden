@@ -1,45 +1,39 @@
-location_id,name,address,postcode,latitude,longitude,location_type
-LOC001,Stadskantoor Gemeente Leiden,Bargelaan 190,2333 CW,52.1545,4.4825,government
-LOC002,Stichting Voedselbank Leiden,Willem Barentszstraat 37,2315 TZ,52.1627,4.4698,organization
-LOC003,Voedselbank Uitdeelpunt Hoge Mors,Robijnstraat 4,2332 KE,52.1569,4.4612,organization
-LOC004,Voedselbank Uitdeelpunt Zuid-West (Opstandingskerk),Aerent Bruunstraat 1,2321 ED,52.1488,4.4754,organization
-LOC005,COA Leiden,Haagse Schouwweg 8A,2332 KG,52.1647,4.4564,organization
-LOC006,FamilySupporters,Ina Boudier-Bakkerplein 1,2331 AX,52.1520,4.4521,organization
-LOC007,Huis van de Buurt Stevenshof,Trix Terwindtstraat 4,2331 GW,52.1504,4.4542,hub
-LOC008,Buzz Leiden (Slaaghwijk),Topaaslaan 19,2332 JC,52.1583,4.4626,organization
-LOC009,Buzz Leiden (Meerburg),Willem Klooslaan 15,2321 BH,52.1532,4.4758,organization
-LOC010,Feminist Evolution,Gerrit Doustraat 1,2311 XM,52.1570,4.4880,organization
-LOC011,DZB Leiden,Le Pooleweg 11,2314 XT,52.1447,4.5028,organization
-LOC012,Diaconaal Centrum De Bakkerij,Oude Rijn 44B,2312 HG,52.1598,4.4934,organization
-LOC013,VrouwKindCentrum De Spiegeling,Langegracht 57,2312 NW,52.1631,4.4944,organization
-LOC014,De Binnenvest,Oude Rijn 59,2312 HC,52.1602,4.4975,organization
-LOC015,Huisartsencentrum Leiden,Oosterkerkstraat 1,2312 SN,52.1588,4.5004,organization
-LOC016,Huis van de Buurt Merenwijk (Op Eigen Wieken),Valkenpad 5,2317 AN,52.1736,4.5072,hub
-LOC017,Kinderboerderij Merenwijk,Parkzicht 100,2317 RH,52.1780,4.5094,organization
-LOC018,Gemeente Leiden Stadsbank,Langebrug 60,2311 TJ,52.161147,4.5005651,government
-LOC019,Humanitas Leiden,Middelstegracht 89A,2312 TT,52.160114,4.497010,organization
-LOC020,Stichting Voor Elkaar Leiden (Kantoor),Oude Rijn 44B,2312 HG,52.1606,4.4925,organization
-LOC021,Huis van de Buurt Vogelvlucht,Boshuizerlaan 5,2321 SG,52.1484773,4.4766820, organization
-LOC022,Buurthuis Dwars,Bloemerd 1C,2353 BZ,52.16447316234977,4.544144333914627,organization
-LOC023,CJG Noord / Het Gebouw Leiden,Arubapad 2,2315 VA,52.16648633298345,4.509158197041569,organization
-LOC024,Huis van de Buurt Morschwijck Leiden,Topaaslaan 19,2332 JC,52.15846673839666,4.462567068205295,government
-LOC025,de Stadskamer Leiden,Nieuwstraat 7,2313KA,52.15820360150544,4.493157254712558,hub
-LOC026,Huis van de Buurt Matilo,Zaanstraat 126,2314 XH,52.15074978419504,4.515152183547911,organization
-LOC027,Ons Eiland,Oude Rijn 44B,2313 HG,52.16000609637255,4.493400525876926,organization
-LOC028,Bibliotheek Oegstgeest,Lange Voort 2T,2341 KA,52.186046806906724,4.471082581699609,government
-LOC029,Bibliotheek Voorschoten,Wijngaardenlaan 4,2252 XN,52.12560668137745,4.44322751238222,government
-LOC030,Utopa-weeshuis Foundation,Hooglandse Kerkgracht 17J,2312 HS,52.1589,4.4941,organization
-LOC031,GGD Hollands Midden,Parmentierweg 49,2316 ZV,52.1679,4.4872,organization
-LOC032,Marengo Perfect Pet Care (Hoofdkantoor) Rotterdam,Boezembocht 28H,3034 KA,51.943509027496795,4.501815210521303,organization
-LOC033,CJG West ,Trix Terwindtstraat 2,2331 JE,52.150447949984276,4.4544368970406225,organization
-LOC034,CJG Midden ,Oosterkerkstraat 1,2312 SN,52.158907800595074,4.500487812384147,organization
-LOC035,CJG Zuid ,Vijf Meilaan 20A,2321 RL,52.14745692674756,4.476739652861586,organization
-LOC036,Coöperatie Energiek Leiden,Meelfabriekplein 2E-L,2312 LK,52.1597,4.5035,organization
-LOC037,Juridisch Loket Leiden,Bargelaan 8A,2333 CT,52.16706084992603,4.481702081698504,organization
-LOC038,De Leidse Rechtswinkel, Langegracht 61,2312 NW,52.16324492764873,4.494565695190979,organization
-LOC039,Huis van de Buurt de Kooi, Driftslaan 49,2315 CD,52.16382232952204,4.510794410393056,hub
-LOC040,Buurtontmoetingsplek 't Trefpunt, Professorenpad 1,2313T A,52.14664771295114,4.498641610533099,hub
-LOC041,Odensehuiskamer, Rosmolen 28,2317 SK,52.17718225114967,4.5046095105348645,organization
-LOC042,Dress for Success Leiden, Janvossensteeg 65,2315 CD,52.16074837512975,4.492392995190864,organization
-LOC043,Leids Steunloket Migranten,Ten Katestraat 10A,2321 AW,52.15656082738873,4.475253410533689,organization
-LOC044,WerkCafe Leiden, Bargelaan 190, 2333 CW,52.16626521072024,4.480584081698464,organization
+location_id,name,address,postcode,latitude,longitude,location_type,google_map_link
+LOC001,Stadskantoor Gemeente Leiden,Bargelaan 190,2333 CW,52.1545,4.4825,government,https://maps.app.goo.gl/mR8WZbTjYajYChj7A
+LOC002,Stichting Voedselbank Leiden,Willem Barentszstraat 37,2315 TZ,52.1627,4.4698,organization,https://maps.app.goo.gl/rvuSzTmRZHGtovWp7
+LOC003,Voedselbank Uitdeelpunt Hoge Mors,Robijnstraat 4,2332 KE,52.1569,4.4612,organization,https://maps.app.goo.gl/ioV9s43s6HNZGoHi9
+LOC004,Voedselbank Uitdeelpunt Zuid-West (Opstandingskerk),Aerent Bruunstraat 1,2321 ED,52.1488,4.4754,organization,https://maps.app.goo.gl/nXEC8GnNp74EtYVK6
+LOC005,COA Leiden,Haagse Schouwweg 8A,2332 KG,52.1647,4.4564,organization,https://maps.app.goo.gl/HTLwAPGQXLRRup3UA
+LOC006,FamilySupporters,Ina Boudier-Bakkerplein 1,2331 AX,52.1520,4.4521,organization,https://maps.app.goo.gl/jrAphhfuSMTSMXnu6
+LOC007,Huis van de Buurt Stevenshof,Trix Terwindtstraat 4,2331 GW,52.1504,4.4542,hub,https://maps.app.goo.gl/58JUStsQT7ppEasy5
+LOC008,WerkCafe Leiden,Bargelaan 190,2333 CW,52.16626521072024,4.480584081698464,organization,https://maps.app.goo.gl/mR8WZbTjYajYChj7A
+LOC009,Buzz Leiden (Meerburg),Willem Klooslaan 15,2321 BH,52.1532,4.4758,organization,https://maps.app.goo.gl/2oYrBEhqU1ajMqzd7
+LOC010,Feminist Evolution,Gerrit Doustraat 1,2311 XM,52.1570,4.4880,organization,https://maps.app.goo.gl/eZ8Ltjgo2ZTpVuWM7
+LOC011,DZB Leiden,Le Pooleweg 11,2314 XT,52.1447,4.5028,organization,https://maps.app.goo.gl/soYkcFVPi66fHYYQ6
+LOC012,Diaconaal Centrum De Bakkerij,Oude Rijn 44B,2312 HG,52.1598,4.4934,hub,https://maps.app.goo.gl/DcReeUznQA3XR6s69
+LOC013,VrouwKindCentrum De Spiegeling,Langegracht 57,2312 NW,52.1631,4.4944,organization,https://maps.app.goo.gl/AheG4N5EPkb8dupm6
+LOC014,De Binnenvest,Oude Rijn 59,2312 HC,52.1602,4.4975,organization,https://maps.app.goo.gl/LkH7N8wnXLtA9sLX9
+LOC015,Huisartsencentrum Leiden,Oosterkerkstraat 1,2312 SN,52.1588,4.5004,hub,https://maps.app.goo.gl/vATozz68ukreqoXf7
+LOC016,Huis van de Buurt Merenwijk (Op Eigen Wieken),Valkenpad 5,2317 AN,52.1736,4.5072,hub,https://maps.app.goo.gl/iDsyMFRDFQqgWF6M7
+LOC017,Kinderboerderij Merenwijk,Parkzicht 100,2317 RH,52.1780,4.5094,organization,https://maps.app.goo.gl/pNV1UVLozXjbVKk1A
+LOC018,Gemeente Leiden Stadsbank,Langebrug 60,2311 TJ,52.161147,4.5005651,government,https://maps.app.goo.gl/JmyeNKNixEcaMyei9
+LOC019,Humanitas Leiden,Middelstegracht 89A,2312 TT,52.160114,4.497010,organization,https://maps.app.goo.gl/5dzSvDxBQPDwi9gHA
+LOC020,Leids Steunloket Migranten,Ten Katestraat 10A,2321 AW,52.15656082738873,4.475253410533689,organization,https://maps.app.goo.gl/S8VbX5hEFR4xJq8j6
+LOC021,Huis van de Buurt Vogelvlucht,Boshuizerlaan 5,2321 SG,52.1484773,4.4766820,organization,https://maps.app.goo.gl/6CbQpL5LcC4EuoxC6
+LOC022,Buurthuis Dwars,Bloemerd 1C,2353 BZ,52.16447316234977,4.544144333914627,organization,https://maps.app.goo.gl/zrESpyrrGYhwERkK8
+LOC023,CJG Noord / Het Gebouw Leiden,Arubapad 2,2315 VA,52.16648633298345,4.509158197041569,organization,https://maps.app.goo.gl/b69LE5nRKgVztdjn8
+LOC024,Huis van de Buurt Morschwijck Leiden,Topaaslaan 19,2332 JC,52.15846673839666,4.462567068205295,hub,https://maps.app.goo.gl/Sznig8N5HQ1q5r2W8
+LOC025,de Stadskamer Leiden,Nieuwstraat 7,2313KA,52.15820360150544,4.493157254712558,hub,https://maps.app.goo.gl/VSMZpqmT4gpdW4io9
+LOC026,Huis van de Buurt Matilo,Zaanstraat 126,2314 XH,52.15074978419504,4.515152183547911,organization,https://maps.app.goo.gl/RG1MmCjNQDQNqVSK9
+LOC027,Dress for Success Leiden,Janvossensteeg 65,2315 CD,52.16074837512975,4.492392995190864,organization,https://maps.app.goo.gl/1t8M5LGZCP9tgWmb6
+LOC028,Bibliotheek Oegstgeest,Lange Voort 2T,2341 KA,52.186046806906724,4.471082581699609,government,https://maps.app.goo.gl/XMWwUyb42TdKYPTj6
+LOC029,Bibliotheek Voorschoten,Wijngaardenlaan 4,2252 XN,52.12560668137745,4.44322751238222,government,https://maps.app.goo.gl/roVaTk1dXedGVoYH6
+LOC030,Utopa-weeshuis Foundation,Hooglandse Kerkgracht 17J,2312 HS,52.1589,4.4941,organization,https://maps.app.goo.gl/1sYtN19VJ3kwUo918
+LOC031,GGD Hollands Midden,Parmentierweg 49,2316 ZV,52.1679,4.4872,organization,https://maps.app.goo.gl/ZHzSQXpWiezvdBDFA
+LOC032,Marengo Perfect Pet Care (Hoofdkantoor) Rotterdam,Boezembocht 28H,3034 KA,51.943509027496795,4.501815210521303,organization,https://maps.app.goo.gl/R7V8cfbkFh1d5NBZ9
+LOC033,CJG West,Trix Terwindtstraat 2,2331 JE,52.150447949984276,4.4544368970406225,organization,https://maps.app.goo.gl/aSyfjax9LkdwLgmh9
+LOC034,Huis van de Buurt de Kooi,Driftslaan 49,2315 CD,52.16382232952204,4.510794410393056,hub,https://maps.app.goo.gl/R6NeRTKMx88Xc5AW9
+LOC035,CJG Zuid,Vijf Meilaan 20A,2321 RL,52.14745692674756,4.476739652861586,organization,https://maps.app.goo.gl/XzXu9SpcdyJftP8Q6
+LOC036,Coöperatie Energiek Leiden,Meelfabriekplein 2E-L,2312 LK,52.1597,4.5035,organization,https://maps.app.goo.gl/K5gRjnRTLuczddct5
+LOC037,Juridisch Loket Leiden,Bargelaan 8A,2333 CT,52.16706084992603,4.481702081698504,organization,https://maps.app.goo.gl/vRqJdUwNTQJGVKX88
+LOC038,De Leidse Rechtswinkel,Langegracht 61,2312 NW,52.16324492764873,4.494565695190979,organization,https://maps.app.goo.gl/i7AYQLMsHom3V2Y79
