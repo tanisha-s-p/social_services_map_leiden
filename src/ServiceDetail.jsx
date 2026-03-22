@@ -15,7 +15,7 @@ export default function ServiceDetail({ service, locationsMap = {}, onBack }) {
 
     const catColor = getCategoryColor(service._categories);
     const cats = service._categories || [];
-    const accessType = service._access_type;
+    const accessType = String(service._access_type || service.access_type || '').split(',').map(a => a.trim()).filter(Boolean);
 
     // Resolve all locations for this service
     const allLocs = (service._loc_ids || [])
