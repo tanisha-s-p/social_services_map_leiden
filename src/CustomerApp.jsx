@@ -22,6 +22,42 @@ import {
 
 delete L.Icon.Default.prototype._getIconUrl;
 
+// ── Haversine distance (km) between two lat/lng points ───────────────────────
+function haversineKm(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function formatDistance(km) {
+    if (km < 1) return `${Math.round(km * 1000)} m`;
+    return `${km.toFixed(1)} km`;
+}
+
+// ── Geocode a Dutch postcode via PDOK (free, no key) ─────────────────────────
+async function geocodePostcode(raw) {
+    const pc = raw.replace(/\s/g, '').toUpperCase();
+    if (!/^\d{4}[A-Z]{2}$/.test(pc)) return null;
+    try {
+        const url = `https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?q=${pc}&rows=1&fl=centroide_ll`;
+        const res = await fetch(url);
+        const json = await res.json();
+        const doc = json?.response?.docs?.[0];
+        if (!doc?.centroide_ll) return null;
+        // centroide_ll = "POINT(lng lat)"
+        const match = doc.centroide_ll.match(/POINT\(([\d.]+)\s+([\d.]+)\)/);
+        if (!match) return null;
+        return { lat: parseFloat(match[2]), lng: parseFloat(match[1]) };
+    } catch {
+        return null;
+    }
+}
+
 const ACCESS_ICONS = {
     walkin:        '🚶',
     appointment:   '📅',
@@ -134,6 +170,8 @@ export default function CustomerApp() {
     const [activeTab,        setActiveTab]        = useState('locaties');
     const [searchQuery,      setSearchQuery]      = useState('');
     const [postcode,         setPostcode]         = useState('');
+    const [postcodeCoords,   setPostcodeCoords]   = useState(null);
+    const [postcodeError,    setPostcodeError]    = useState(false);
     const [activeCategories, setActiveCategories] = useState([]);
     const [activeTypes,      setActiveTypes]      = useState([]);
     const [showChat,         setShowChat]         = useState(false);
@@ -160,6 +198,24 @@ export default function CustomerApp() {
                 setDataLoading(false);
             });
     }, []);
+
+    // ── Geocode postcode whenever it changes (debounced 600 ms) ──────────────
+    useEffect(() => {
+        setPostcodeError(false);
+        const pc = postcode.replace(/\s/g, '');
+        if (pc.length < 6) { setPostcodeCoords(null); return; }
+        const timer = setTimeout(async () => {
+            const coords = await geocodePostcode(pc);
+            if (coords) {
+                setPostcodeCoords(coords);
+                setPostcodeError(false);
+            } else {
+                setPostcodeCoords(null);
+                setPostcodeError(true);
+            }
+        }, 600);
+        return () => clearTimeout(timer);
+    }, [postcode]);
 
     const handleLocationCardClick = useCallback((loc) => {
         setFlyTo([loc.latitude, loc.longitude]);
@@ -201,23 +257,35 @@ export default function CustomerApp() {
             return aTop - bTop;
         });
 
-    const filteredLocations = locations.filter((loc) => {
-        if (activeCategories.length > 0) {
-            const hasCat = loc.services.some((s) =>
-                s._categories.some((c) => activeCategories.includes(c)),
-            );
-            if (!hasCat) return false;
-        }
-        const q = searchQuery.toLowerCase().trim();
-        if (q) {
-            const match =
-                (loc.name    || '').toLowerCase().includes(q) ||
-                (loc.address || '').toLowerCase().includes(q) ||
-                loc.services.some((s) => (s.description || '').toLowerCase().includes(q));
-            if (!match) return false;
-        }
-        return true;
-    });
+    const filteredLocations = locations
+        .filter((loc) => {
+            if (activeCategories.length > 0) {
+                const hasCat = loc.services.some((s) =>
+                    s._categories.some((c) => activeCategories.includes(c)),
+                );
+                if (!hasCat) return false;
+            }
+            const q = searchQuery.toLowerCase().trim();
+            if (q) {
+                const match =
+                    (loc.name    || '').toLowerCase().includes(q) ||
+                    (loc.address || '').toLowerCase().includes(q) ||
+                    loc.services.some((s) => (s.description || '').toLowerCase().includes(q));
+                if (!match) return false;
+            }
+            return true;
+        })
+        .map((loc) => ({
+            ...loc,
+            _distanceKm: postcodeCoords
+                ? haversineKm(postcodeCoords.lat, postcodeCoords.lng, loc.latitude, loc.longitude)
+                : null,
+        }))
+        .sort((a, b) => {
+            if (a._distanceKm !== null && b._distanceKm !== null)
+                return a._distanceKm - b._distanceKm;
+            return 0;
+        });
 
     const toggleCategory = (cat) => {
         setActiveCategories((prev) =>
@@ -293,14 +361,37 @@ export default function CustomerApp() {
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                         />
                                     </div>
-                                    <input
-                                        type="text"
-                                        className="postcode-input"
-                                        placeholder="Postcode"
-                                        value={postcode}
-                                        onChange={(e) => setPostcode(e.target.value)}
-                                        maxLength={7}
-                                    />
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            type="text"
+                                            className="postcode-input"
+                                            placeholder="Postcode"
+                                            value={postcode}
+                                            onChange={(e) => setPostcode(e.target.value)}
+                                            maxLength={7}
+                                            style={{
+                                                borderColor: postcodeError
+                                                    ? '#c8421e'
+                                                    : postcodeCoords
+                                                    ? '#2d6b27'
+                                                    : undefined,
+                                            }}
+                                        />
+                                        {postcodeCoords && (
+                                            <span style={{
+                                                position: 'absolute', right: 7, top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                fontSize: 12, color: '#2d6b27', pointerEvents: 'none',
+                                            }}>📍</span>
+                                        )}
+                                        {postcodeError && (
+                                            <span style={{
+                                                position: 'absolute', right: 7, top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                fontSize: 12, color: '#c8421e', pointerEvents: 'none',
+                                            }}>✕</span>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="filter-row">
                                     {['Regeling', 'Informatie', 'Ondersteuning'].map((t) => (
@@ -384,6 +475,21 @@ export default function CustomerApp() {
                                                     style={{ background: LOC_TYPE_COLORS[loc.location_type] || '#999' }}
                                                 />
                                                 <div className="loc-name">{loc.name}</div>
+                                                {loc._distanceKm !== null && (
+                                                    <span style={{
+                                                        marginLeft: 'auto',
+                                                        fontSize: 11,
+                                                        fontWeight: 600,
+                                                        color: '#2d6b27',
+                                                        background: '#eef5ee',
+                                                        padding: '2px 7px',
+                                                        borderRadius: 20,
+                                                        flexShrink: 0,
+                                                        whiteSpace: 'nowrap',
+                                                    }}>
+                                                        {formatDistance(loc._distanceKm)}
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="loc-address">{loc.address}</div>
                                             <div className="loc-services-count">
