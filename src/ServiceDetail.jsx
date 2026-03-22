@@ -132,8 +132,14 @@ export default function ServiceDetail({ service, locationsMap = {}, onBack }) {
                     </span>
                                         <br />
                                         <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>
-                      {l.address}{l.postcode ? `, ${l.postcode}` : ''}
-                    </span>
+                                            {l.google_map_link ? (
+                                                <a href={l.google_map_link} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+                                                    {l.address}{l.postcode ? `, ${l.postcode}` : ''} ↗
+                                                </a>
+                                            ) : (
+                                                <>{l.address}{l.postcode ? `, ${l.postcode}` : ''}</>
+                                            )}
+                                        </span>
                                     </div>
                                 ))}
                             </div>

@@ -58,6 +58,7 @@ export const csvToLocations = (csvText) => {
         latitude: parseFloat(row.latitude) || 0,
         longitude: parseFloat(row.longitude) || 0,
         location_type: row.location_type || row.type || 'Buurthuis',
+        google_map_link: row.google_map_link || '',
         last_checked: row.last_checked || new Date().toISOString(),
     })).filter(l => l.location_id && l.name); // Filter out empty rows
 };
