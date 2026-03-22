@@ -599,7 +599,20 @@ export default function CustomerApp() {
                                         >
                                             {LOC_TYPE_LABELS[loc.location_type] || loc.location_type}
                                         </div>
-                                        <div className="popup-address">{loc.address}</div>
+                                        <div className="popup-address">
+                                            {loc.google_map_link ? (
+                                                <a 
+                                                    href={loc.google_map_link} 
+                                                    target="_blank" 
+                                                    rel="noreferrer" 
+                                                    style={{ color: 'inherit', textDecoration: 'underline' }}
+                                                >
+                                                    {loc.address} ↗
+                                                </a>
+                                            ) : (
+                                                <>{loc.address}</>
+                                            )}
+                                        </div>
                                         {loc.services.length > 0 && (
                                             <div style={{ marginTop: 6 }}>
                                                 {loc.services.slice(0, 6).map((s, i) => (
