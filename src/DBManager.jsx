@@ -244,6 +244,46 @@ const Textarea = ({ value, onChange, rows = 3 }) => (
     <textarea value={value} onChange={e => onChange(e.target.value)} rows={rows}
               style={{ ...inputStyle, height: "auto", padding: "6px 10px", resize: "vertical" }} />
 );
+const DropdownMultiSelect = ({ value, onChange, options, placeholder = "Selecteer optie..." }) => {
+    // Convert comma-separated string to array
+    const selected = value ? String(value).split(',').map(s => s.trim()).filter(Boolean) : [];
+    
+    const handleAdd = (val) => {
+        if (!val) return;
+        if (!selected.includes(val)) onChange([...selected, val].join(', '));
+    };
+
+    const handleRemove = (val) => {
+        onChange(selected.filter(v => v !== val).join(', '));
+    };
+
+    return (
+        <div>
+            {/* Show selected items as small removable tags */}
+            {selected.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                    {selected.map(sel => {
+                        const opt = options.find(o => String(o.value) === String(sel));
+                        const label = opt ? opt.label : sel;
+                        return (
+                            <div key={sel} style={{ display: "flex", alignItems: "center", background: T.surface2, border: `1px solid ${T.border}`, padding: "2px 8px", borderRadius: 12, fontSize: 12, color: T.textPrimary }}>
+                                <span>{label}</span>
+                                <button onClick={() => handleRemove(sel)} style={{ background: "none", border: "none", cursor: "pointer", marginLeft: 6, color: T.textMuted, fontSize: 14, padding: 0 }}>×</button>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+            {/* The actual dropdown to pick new items */}
+            <select value="" onChange={e => handleAdd(e.target.value)} style={{ ...inputStyle, height: 34, padding: "0 10px" }}>
+                <option value="">{placeholder}</option>
+                {options.filter(o => !selected.includes(String(o.value))).map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+            </select>
+        </div>
+    );
+};
 
 const Btn = ({ onClick, variant = "primary", children, small }) => {
     const base = { border: "none", borderRadius: T.radiusSm, cursor: "pointer", fontWeight: 500, whiteSpace: "nowrap", fontFamily: "'Outfit', system-ui, sans-serif", transition: "opacity 0.12s" };
@@ -273,12 +313,23 @@ const Modal = ({ open, onClose, title, children, wide }) => {
 
 
 
-const LocationForm = ({ loc, onSave, onClose }) => {
-    const empty = { name: "", address: "", postcode: "", latitude: "", longitude: "", location_type: "Buurthuis", google_map_link: "" };
-    const [form, setForm] = useState(loc ? { ...loc } : empty);
+const LocationForm = ({ loc, locations = [], onSave, onClose }) => {
+    const empty = { name: "", address: "", postcode: "", latitude: "", longitude: "", location_type: "Buurthuis", google_map_link: "", _customType: "" };
+    const [form, setForm] = useState(loc ? { ...loc, _customType: "" } : empty);
     const set = (k) => (v) => setForm(f => ({ ...f, [k]: v }));
-    const typeOpts = ["Buurthuis", "Wijkcentrum", "Gezondheidscentrum", "Bibliotheek", "Gemeentehuis", "Sporthal", "Voedselbank", "Jeugdhuis", "government", "organization", "hub"]
-        .map(t => ({ value: t, label: t }));
+    
+    // Combine defaults with existing types in DB
+    const defaultTypes = ["Buurthuis", "Wijkcentrum", "Gezondheidscentrum", "Bibliotheek", "Gemeentehuis", "Sporthal", "Voedselbank", "Jeugdhuis", "government", "organization", "hub"];
+    const existingTypes = locations ? locations.map(l => l.location_type).filter(Boolean) : [];
+    const uniqueTypes = [...new Set([...defaultTypes, ...existingTypes])].filter(t => t !== "__NEW__").sort();
+    
+    const typeOpts = uniqueTypes.map(t => ({ value: t, label: t }));
+    typeOpts.push({ value: "__NEW__", label: "+ Nieuw type toevoegen..." });
+
+    // Make sure the current type is in the list even if it's obscure
+    if (form.location_type && form.location_type !== "__NEW__" && !uniqueTypes.includes(form.location_type)) {
+        typeOpts.unshift({ value: form.location_type, label: form.location_type });
+    }
 
     return (
         <div>
@@ -287,13 +338,30 @@ const LocationForm = ({ loc, onSave, onClose }) => {
                 <div style={{ gridColumn: "1 / -1" }}><Field label="Adres"><Input value={form.address} onChange={set("address")} placeholder="Straat + huisnummer" /></Field></div>
                 <div style={{ gridColumn: "1 / -1" }}><Field label="Google Maps Link"><Input value={form.google_map_link} onChange={set("google_map_link")} placeholder="https://maps.google.com/..." /></Field></div>
                 <Field label="Postcode"><Input value={form.postcode} onChange={set("postcode")} placeholder="1234 AB" /></Field>
-                <Field label="Type"><Select value={form.location_type} onChange={set("location_type")} options={typeOpts} /></Field>
+                
+                <Field label="Type">
+                    <Select value={form.location_type} onChange={set("location_type")} options={typeOpts} />
+                    {form.location_type === "__NEW__" && (
+                        <div style={{ marginTop: 8 }}>
+                            <Input value={form._customType} onChange={set("_customType")} placeholder="Typ nieuw type..." />
+                        </div>
+                    )}
+                </Field>
+
                 <Field label="Breedtegraad"><Input value={form.latitude} onChange={set("latitude")} placeholder="52.0907" /></Field>
                 <Field label="Lengtegraad"><Input value={form.longitude} onChange={set("longitude")} placeholder="5.1214" /></Field>
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
                 <Btn variant="secondary" onClick={onClose}>Annuleren</Btn>
-                <Btn onClick={() => { onSave(form); onClose(); }}>Opslaan</Btn>
+                <Btn onClick={() => { 
+                    const finalForm = { ...form };
+                    if (finalForm.location_type === "__NEW__") {
+                        finalForm.location_type = finalForm._customType || "Overig";
+                    }
+                    delete finalForm._customType; 
+                    onSave(finalForm); 
+                    onClose(); 
+                }}>Opslaan</Btn>
             </div>
         </div>
     );
@@ -319,8 +387,16 @@ const ServiceForm = ({ svc, locations, onSave, onClose }) => {
                 <Field label="Doelgroep"><Input value={form.target_group} onChange={set("target_group")} placeholder="bijv. Alle inwoners" /></Field>
                 <Field label="Inkomensvereiste"><Input value={form.income_requirement} onChange={set("income_requirement")} placeholder="bijv. Geen" /></Field>
                 <Field label="Kosten gebruiker"><Input value={form.cost_to_user} onChange={set("cost_to_user")} placeholder="bijv. Gratis" /></Field>
-                <Field label="Toegangstype"><Select value={form.access_type} onChange={set("access_type")} options={accesses} /></Field>
-                <div style={{ gridColumn: "1 / -1" }}><Field label="Locatie"><Select value={form.location_id} onChange={set("location_id")} options={locOpts} /></Field></div>
+                <div style={{ gridColumn: "1 / -1" }}>
+                    <Field label="Toegangstype">
+                        <DropdownMultiSelect value={form.access_type} onChange={set("access_type")} options={accesses} placeholder="+ Toegang toevoegen..." />
+                    </Field>
+                </div>
+                <div style={{ gridColumn: "1 / -1" }}>
+                    <Field label="Locatie(s)">
+                        <DropdownMultiSelect value={form.location_id} onChange={set("location_id")} options={locOpts} placeholder="+ Locatie toevoegen..." />
+                    </Field>
+                </div>
                 <Field label="Beschikbaarheid"><Input value={form.availability} onChange={set("availability")} placeholder="bijv. Ma-Vr 9:00-17:00" /></Field>
                 <Field label="Telefoon"><Input value={form.phone} onChange={set("phone")} placeholder="010-1234567" /></Field>
                 <Field label="E-mail"><Input value={form.email} onChange={set("email")} placeholder="info@..." /></Field>
@@ -480,8 +556,8 @@ const LocationsPage = () => {
             </div>
 
             <Modal open={dialogOpen} onClose={() => setDialogOpen(false)} title={editLoc ? "Locatie bewerken" : "Nieuwe locatie"}>
-                <LocationForm loc={editLoc} onClose={() => setDialogOpen(false)}
-                              onSave={form => editLoc ? updateLocation(form) : addLocation(form)} />
+                <LocationForm loc={editLoc} locations={locations} onClose={() => setDialogOpen(false)}
+                            onSave={form => editLoc ? updateLocation(form) : addLocation(form)} />
             </Modal>
         </div>
     );
@@ -497,12 +573,14 @@ const ServicesPage = () => {
     const [editSvc,      setEditSvc]      = useState(null);
     const PER_PAGE = 8;
 
-    const cats     = [...new Set(services.map(s => s.category))].sort();
-    const accesses = [...new Set(services.map(s => s.access_type))].sort();
+    // Split the strings by comma, trim whitespace, and flatten to get unique individual items
+    const cats     = [...new Set(services.flatMap(s => String(s.category || "").split(',').map(x => x.trim()).filter(Boolean)))].sort();
+    const accesses = [...new Set(services.flatMap(s => String(s.access_type || "").split(',').map(x => x.trim()).filter(Boolean)))].sort();
 
     const filtered = services.filter(s => {
-        if (filterCat    !== "all" && s.category    !== filterCat)    return false;
-        if (filterAccess !== "all" && s.access_type !== filterAccess) return false;
+        // Check if the individual filter item exists in the comma-separated string
+        if (filterCat !== "all" && !String(s.category || "").split(',').map(x => x.trim()).includes(filterCat)) return false;
+        if (filterAccess !== "all" && !String(s.access_type || "").split(',').map(x => x.trim()).includes(filterAccess)) return false;
         if (search) {
             const q = search.toLowerCase();
             return [s.name, s.service_id, s.category, s.type, s.target_group, s.keywords].join(" ").toLowerCase().includes(q);
