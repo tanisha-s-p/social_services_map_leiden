@@ -311,7 +311,7 @@ const DropdownMultiSelect = ({ value, onChange, options, placeholder="Selecteer.
 const Btn = ({ onClick, variant="primary", children, small }) => {
     const base = { border:"none", borderRadius:T.radiusSm, cursor:"pointer", fontWeight:500, whiteSpace:"nowrap", fontFamily:T.fontBody };
     const s = {
-        primary:   { ...base, background:T.accent, color:T.bg,          padding: small?"5px 12px":"7px 16px", fontSize: small?12:13 },
+        primary:   { ...base, background:T.textPrimary, color:T.bg,          padding: small?"5px 12px":"7px 16px", fontSize: small?12:13 },
         secondary: { ...base, background:T.surface2,    color:T.textPrimary, border:`1px solid ${T.border}`, padding: small?"5px 12px":"7px 16px", fontSize: small?12:13 },
         danger:    { ...base, background:T.accentLight, color:T.accent,      border:`1px solid #f0c4b8`, padding: small?"5px 12px":"7px 16px", fontSize: small?12:13 },
     };
@@ -386,11 +386,11 @@ const LocationForm = ({ loc, locations=[], onSave, onClose }) => {
 };
 
 const ServiceForm = ({ svc, locations, onSave, onClose }) => {
-    const empty = { name:"", category:"Gezondheid en zorg", description:"", target_group:"", income_requirement:"Geen", cost_to_user:"Gratis", access_type:"walkin", location_id:locations[0]?.location_id||"", availability:"", phone:"", email:"", website:"", needs_referral:false, keywords:"", notes:"" };
+    const empty = { name:"", category:"Gezondheid en zorg", type:"Advies", description:"", target_group:"", income_requirement:"Geen", cost_to_user:"Gratis", access_type:"walkin", location_id:locations[0]?.location_id||"", availability:"", phone:"", email:"", website:"", needs_referral:false, keywords:"", notes:"" };
     const [form, setForm] = useState(svc ? { ...svc } : empty);
     const set = k => v => setForm(f=>({...f,[k]:v}));
     const cats     = ["Hulp bij schulden","Kinderen en opgroeien","Gezondheid en zorg","Studeren en werken","Wonen en energie besparen","Onkosten en dagelijks leven"].map(c=>({value:c,label:c}));
-    const types    = ["Ondersteuning","Regeling","Informatie"].map(t=>({value:t,label:t}));
+    const types    = ["Advies","Cursus","Dagopvang","Groepsactiviteit","Huisbezoek","Medische zorg","Persoonlijke begeleiding","Subsidie","Uitgifte","Workshop","Ondersteuning","Regeling","Informatie"].map(t=>({value:t,label:t}));
     const accesses = ["walkin","appointment","phone","online","home_visit","referral_only"].map(a=>({value:a,label:a}));
     const locOpts  = locations.map(l=>({ value:l.location_id, label:`${l.location_id} — ${l.name}` }));
     return (
@@ -398,7 +398,7 @@ const ServiceForm = ({ svc, locations, onSave, onClose }) => {
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
                 <div style={{ gridColumn:"1/-1" }}><Field label="Naam dienst"><Input value={form.name} onChange={set("name")} placeholder="Naam" /></Field></div>
                 <Field label="Categorie"><Select value={form.category} onChange={set("category")} options={cats} /></Field>
-                <Field label="Type"><DropdownMultiSelect value={form.type} onChange={set("type")} options={types} placeholder="+ Type toevoegen…" /></Field>
+                <Field label="Type"><Select value={form.type} onChange={set("type")} options={types} /></Field>
                 <div style={{ gridColumn:"1/-1" }}><Field label="Omschrijving"><Textarea value={form.description} onChange={set("description")} /></Field></div>
                 <Field label="Doelgroep"><Input value={form.target_group} onChange={set("target_group")} placeholder="bijv. Alle inwoners" /></Field>
                 <Field label="Inkomensvereiste"><Input value={form.income_requirement} onChange={set("income_requirement")} /></Field>
@@ -692,7 +692,7 @@ const LoginPage = ({ onLogin }) => {
                         </button>
                     </div>
                 </div>
-                <button onClick={onLogin} style={{ width:"100%", height:36, background:T.accent, color:T.bg, border:"none", borderRadius:T.radiusSm, fontSize:13, fontWeight:600, cursor:"pointer", marginBottom:10 }}>
+                <button onClick={onLogin} style={{ width:"100%", height:36, background:T.textPrimary, color:T.bg, border:"none", borderRadius:T.radiusSm, fontSize:13, fontWeight:600, cursor:"pointer", marginBottom:10 }}>
                     Inloggen
                 </button>
                 <button onClick={()=>navigate("/")} style={{ width:"100%", height:36, background:"transparent", color:T.textSecondary, border:`1px solid ${T.border}`, borderRadius:T.radiusSm, fontSize:13, cursor:"pointer" }}>
@@ -741,7 +741,7 @@ export default function DBManager() {
                 <div style={{ width:220, flexShrink:0, background:T.surface, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column" }}>
                     <div style={{ padding:"16px 16px 12px", borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", gap:10 }}>
                         <div style={{ width:30, height:30, background:T.textPrimary, borderRadius:T.radiusSm, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, color:T.bg }}>⬡</div>
-                        <span style={{ fontFamily:T.fontDisplay, fontWeight:600, fontSize:15 }}>Locations Manager</span>
+                        <span style={{ fontFamily:T.fontDisplay, fontWeight:600, fontSize:15 }}>DBAdmin</span>
                     </div>
                     <nav style={{ flex:1, padding:"12px 8px" }}>
                         {navItems.map(item=>(
