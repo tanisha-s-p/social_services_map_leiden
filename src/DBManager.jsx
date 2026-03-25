@@ -152,7 +152,7 @@ const saveServicesToServer = async (svcs) => {
 };
 const loadCSVFile = async (filename) => {
     try {
-        const r = await fetch(`/${filename}`);
+        const r = await fetch(`${process.env.PUBLIC_URL}/${filename}`);
         if (!r.ok) throw new Error(r.statusText);
         return await r.text();
     } catch (e) { console.error(e); return ''; }
