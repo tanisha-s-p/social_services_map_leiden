@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/social_services_map_leiden/static/css/main.215ece5e.css",
+    "main.js": "/social_services_map_leiden/static/js/main.7edeb62c.js",
+    "index.html": "/social_services_map_leiden/index.html",
+    "main.215ece5e.css.map": "/social_services_map_leiden/static/css/main.215ece5e.css.map",
+    "main.7edeb62c.js.map": "/social_services_map_leiden/static/js/main.7edeb62c.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.215ece5e.css",
+    "static/js/main.7edeb62c.js"
+  ]
+}
