@@ -99,7 +99,7 @@ export const csvToServices = (csvText) => {
  */
 export const loadCSVFile = async (filename) => {
     try {
-        const response = await fetch(`${process.env.PUBLIC_URL}/${filename}`);
+        const response = await fetch(`/${filename}`);
         if (!response.ok) {
             throw new Error(`Failed to load ${filename}: ${response.statusText}`);
         }

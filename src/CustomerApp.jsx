@@ -183,8 +183,8 @@ export default function CustomerApp() {
 
     useEffect(() => {
         Promise.all([
-            fetch(`${process.env.PUBLIC_URL}/services.csv`).then((r) => r.text()),
-            fetch(`${process.env.PUBLIC_URL}/locations.csv`).then((r) => r.text()),
+            fetch('/services.csv').then((r) => r.text()),
+            fetch('/locations.csv').then((r) => r.text()),
         ])
             .then(([sText, lText]) => Promise.all([parseCsv(sText), parseCsv(lText)]))
             .then(([rawServices, rawLocations]) => {
