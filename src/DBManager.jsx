@@ -447,13 +447,45 @@ const OverviewPage = () => {
                 <p style={{ color:T.textSecondary, fontSize:13, margin:0 }}>Welkom terug, Admin.</p>
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))", gap:12, marginBottom:24 }}>
-                {stats.map(s=>(
-                    <div key={s.label} style={{ background:s.warn?T.accentLight:T.surface, border:`1px solid ${s.warn?"#f0c4b8":T.border}`, borderRadius:T.radiusMd, padding:"14px 16px", boxShadow:T.shadowSm }}>
-                        <div style={{ fontSize:11, fontWeight:500, color:s.warn?T.accent:T.textMuted, marginBottom:4 }}>{s.label}</div>
-                        <div style={{ fontSize:26, fontWeight:700, color:s.warn?T.accent:T.textPrimary }}>{s.value}</div>
-                        <div style={{ fontSize:11, color:s.warn?T.accent:T.textMuted, marginTop:2 }}>{s.sub}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 24 }}>
+                {stats.map(s => (
+                    <div 
+                        key={s.label} 
+                        style={{ 
+                            // Using RGBA here: 0.8 is 80% opacity. 1.0 is solid.
+                            background: s.warn ? "rgba(200, 66, 30, 0.75)" : T.surface, 
+                            border: `1px solid ${s.warn ? "rgba(200, 66, 30, 0.9)" : T.border}`, 
+                            borderRadius: T.radiusMd, 
+                            padding: "14px 16px", 
+                            boxShadow: T.shadowSm 
+                        }}
+                    >
+                        <div style={{ 
+                            fontSize: 11, 
+                            fontWeight: 500, 
+                            color: s.warn ? "#ffffff" : T.textMuted, 
+                            marginBottom: 4 
+                        }}>
+                            {s.label}
+                        </div>
+                        <div style={{ 
+                            fontSize: 26, 
+                            fontWeight: 700, 
+                            color: s.warn ? "#ffffff" : T.textPrimary, 
+                            fontFamily: T.fontDisplay 
+                        }}>
+                            {s.value}
+                        </div>
+                        <div style={{ 
+                            fontSize: 11, 
+                            color: s.warn ? "#f0ede8" : T.textMuted, 
+                            marginTop: 2 
+                        }}>
+                            {s.sub}
+                        </div>
                     </div>
                 ))}
+            </div>
             </div>
             <div style={{ background:T.surface, border:`1px solid ${T.border}`, borderRadius:T.radiusMd, overflow:"hidden", boxShadow:T.shadowSm }}>
                 <div style={{ padding:"14px 16px", borderBottom:`1px solid ${T.border}` }}>
