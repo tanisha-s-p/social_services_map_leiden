@@ -98,7 +98,7 @@ body {
 .hero-chat-btn:hover { background: #a83518; transform: translateY(-1px); box-shadow: var(--shadow-md); }
 
 /* MAIN */
-.main-area { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+.main-area { display: flex; flex: 1; min-height: 0; overflow: hidden; position: relative; }
 
 /* LEFT PANEL */
 .left-panel {
@@ -547,9 +547,39 @@ body {
 .popup-service-item { font-size: 11.5px; color: var(--text-secondary); padding: 3px 6px; background: #f5f3ef; border-radius: 4px; margin-bottom: 3px; font-family: var(--font-body); }
 
 @media (max-width: 768px) {
-  .left-panel { width: 100%; height: 45vh; }
-  .main-area { flex-direction: column; }
-  .map-container { height: 55vh; }
+  /* Stack panel above map */
+  .main-area { flex-direction: column; overflow: hidden; position: relative; }
+
+  /* Hard-clamp the panel so it can NEVER bleed into the map */
+  .left-panel {
+    width: 100%;
+    height: 46vh;
+    max-height: 46vh;
+    flex-shrink: 0;
+    overflow: hidden;       /* clips cards + their box-shadows / animations */
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Map fills the remaining space */
+  .map-container { flex: 1; min-height: 0; height: auto; }
+
+  /* Hero */
+  .hero { height: auto; min-height: 48px; padding: 8px 12px; gap: 6px; flex-wrap: wrap; }
+  .hero-title { font-size: 15px; }
+  .hero-brand { gap: 4px; }
+
+  /* Tighter panel internals */
+  .search-area { padding: 8px 10px; }
+  .search-row { gap: 6px; margin-bottom: 6px; }
+  .search-input { font-size: 13px; padding: 7px 8px 7px 28px; }
+  .postcode-input { font-size: 13px; padding: 7px 8px; width: 90px; }
+  .search-btn { padding: 7px; font-size: 13px; }
+  .cat-chips { padding: 6px 10px; gap: 3px; }
+  .cat-chip { font-size: 10px; padding: 2px 7px; }
+  .tab-btn { font-size: 12px; padding: 8px 10px; }
+  .results-list { padding: 6px 8px; gap: 5px; }
+  .service-card, .location-card { padding: 9px 11px; }
 }
 
 /* ── SERVICE DETAIL PANEL ── */

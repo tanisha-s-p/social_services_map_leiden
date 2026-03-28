@@ -706,10 +706,11 @@ const LoginPage = ({ onLogin }) => {
 // ── Root ──────────────────────────────────────────────────────────────────────
 export default function DBManager() {
     const navigate    = useNavigate();
-    const [loggedIn, setLoggedIn] = useState(() => sessionStorage.getItem('dbadmin_auth') === '1');
+    const [loggedIn,    setLoggedIn]    = useState(() => sessionStorage.getItem('dbadmin_auth') === '1');
     const [page,        setPage]        = useState("overview");
     const [initialData, setInitialData] = useState({ locations:[], services:[] });
     const [saveStatus,  setSaveStatus]  = useState("idle");
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     useEffect(() => {
         loadInitialData()
@@ -735,17 +736,59 @@ export default function DBManager() {
     return (
         <DataProvider initialData={initialData} onSaveStatus={setSaveStatus}>
             <link rel="stylesheet" href={GOOGLE_FONTS} />
+            <style>{`
+                @media (max-width: 768px) {
+                    .dbm-sidebar {
+                        position: fixed !important;
+                        left: 0; top: 0; bottom: 0;
+                        z-index: 300;
+                        transform: translateX(-100%);
+                        transition: transform 0.25s ease;
+                        box-shadow: 4px 0 24px rgba(0,0,0,0.18);
+                    }
+                    .dbm-sidebar.open {
+                        transform: translateX(0);
+                    }
+                    .dbm-hamburger { display: flex !important; }
+                    .dbm-overlay { display: block !important; }
+                }
+            `}</style>
+
             <div style={{ display:"flex", height:"100vh", fontFamily:T.fontBody, fontSize:13, background:T.bg, color:T.textPrimary }}>
 
+                {/* Mobile overlay backdrop */}
+                <div
+                    className="dbm-overlay"
+                    onClick={() => setSidebarOpen(false)}
+                    style={{
+                        display: "none",
+                        position: "fixed", inset: 0,
+                        background: "rgba(0,0,0,0.45)",
+                        zIndex: 299,
+                        opacity: sidebarOpen ? 1 : 0,
+                        pointerEvents: sidebarOpen ? "auto" : "none",
+                        transition: "opacity 0.25s",
+                    }}
+                />
+
                 {/* Sidebar */}
-                <div style={{ width:220, flexShrink:0, background:T.surface, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column" }}>
-                    <div style={{ padding:"16px 16px 12px", borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", gap:10 }}>
-                        <div style={{ width:30, height:30, background:T.textPrimary, borderRadius:T.radiusSm, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, color:T.bg }}>⬡</div>
-                        <span style={{ fontFamily:T.fontDisplay, fontWeight:600, fontSize:15 }}>Locations Manager</span>
+                <div className={`dbm-sidebar${sidebarOpen ? " open" : ""}`}
+                     style={{ width:220, flexShrink:0, background:T.surface, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column" }}>
+
+                    <div style={{ padding:"14px 14px 10px", borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", gap:10 }}>
+                        <div style={{ width:28, height:28, background:T.textPrimary, borderRadius:T.radiusSm, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, color:T.bg, flexShrink:0 }}>⬡</div>
+                        <span style={{ fontFamily:T.fontDisplay, fontWeight:600, fontSize:14, flex:1 }}>Locations Manager</span>
+                        {/* Close button — visible only on mobile via CSS */}
+                        <button
+                            onClick={() => setSidebarOpen(false)}
+                            style={{ background:"none", border:"none", cursor:"pointer", color:T.textMuted, fontSize:18, lineHeight:1, padding:"2px 4px" }}
+                            title="Sluiten"
+                        >×</button>
                     </div>
-                    <nav style={{ flex:1, padding:"12px 8px" }}>
+
+                    <nav style={{ flex:1, padding:"10px 8px" }}>
                         {navItems.map(item=>(
-                            <button key={item.id} onClick={()=>setPage(item.id)}
+                            <button key={item.id} onClick={()=>{ setPage(item.id); setSidebarOpen(false); }}
                                     style={{ width:"100%", display:"flex", alignItems:"center", gap:10, padding:"8px 10px", borderRadius:T.radiusSm, border:"none", cursor:"pointer", textAlign:"left", fontSize:13, marginBottom:2, background:page===item.id?T.surface2:"transparent", color:page===item.id?T.textPrimary:T.textMuted, fontWeight:page===item.id?600:400 }}>
                                 <span style={{ fontSize:15 }}>{item.icon}</span>
                                 {item.label}
@@ -756,11 +799,12 @@ export default function DBManager() {
                             <span>←</span> Hoofdmenu
                         </button>
                     </nav>
-                    <div style={{ padding:"12px 16px", borderTop:`1px solid ${T.border}` }}>
+
+                    <div style={{ padding:"12px 14px", borderTop:`1px solid ${T.border}` }}>
                         <SaveStatus status={saveStatus} />
                         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                                <div style={{ width:28, height:28, background:T.textPrimary, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, color:T.bg, fontWeight:600 }}>A</div>
+                                <div style={{ width:26, height:26, background:T.textPrimary, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, color:T.bg, fontWeight:600 }}>A</div>
                                 <div>
                                     <div style={{ fontSize:12, fontWeight:500 }}>Admin User</div>
                                     <div style={{ fontSize:11, color:T.textMuted }}>admin@dbadmin.nl</div>
@@ -772,7 +816,31 @@ export default function DBManager() {
                 </div>
 
                 {/* Main */}
-                <div style={{ flex:1, overflow:"auto" }}>
+                <div style={{ flex:1, overflow:"auto", minWidth:0 }}>
+                    {/* Mobile top bar with hamburger */}
+                    <div
+                        className="dbm-hamburger"
+                        style={{
+                            display: "none",
+                            alignItems: "center",
+                            gap: 10,
+                            padding: "10px 14px",
+                            borderBottom: `1px solid ${T.border}`,
+                            background: T.surface,
+                            position: "sticky", top: 0, zIndex: 10,
+                        }}
+                    >
+                        <button
+                            onClick={() => setSidebarOpen(true)}
+                            style={{ background:"none", border:`1px solid ${T.border}`, borderRadius:T.radiusSm, padding:"5px 10px", cursor:"pointer", fontSize:16, color:T.textPrimary, display:"flex", alignItems:"center", gap:6 }}
+                        >
+                            ☰
+                        </button>
+                        <span style={{ fontFamily:T.fontDisplay, fontWeight:600, fontSize:14, color:T.textPrimary }}>
+                            {navItems.find(n => n.id === page)?.label ?? "Beheer"}
+                        </span>
+                    </div>
+
                     <div style={{ maxWidth:1100, margin:"0 auto", padding:24 }}>
                         {page==="overview"  && <OverviewPage />}
                         {page==="locations" && <LocationsPage />}
