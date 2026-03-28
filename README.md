@@ -20,7 +20,7 @@ The application serves a broad audience:
  
 - **Residents** looking for nearby support, activities, or services
 - **Social workers and case managers** who need a quick reference to refer clients to the right organisations
-- **Care professionals and GPs** seeking a comprehensive overview of non-medical support in the city
+- **Care professionals** seeking a comprehensive overview of non-medical support in the city
 - **Volunteers and organisations** wanting to be visible and accessible to the community
  
 ### Why Leiden Sociale Kaart?
